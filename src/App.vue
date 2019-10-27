@@ -5,7 +5,7 @@
 </template>
 
 <style lang="scss">
-    @import '../src/assets/css/reset';
+    @import '@/assets/css/reset';
     html {
         height: 100%;
         font-size: 25px;

@@ -9,6 +9,7 @@ module.exports = {
         config.resolve.symlinks(true);
         config.resolve.alias
             .set('@', resolve('src'))
+            .set('components', resolve('src/components'))
     },
     css: {
         loaderOptions: {

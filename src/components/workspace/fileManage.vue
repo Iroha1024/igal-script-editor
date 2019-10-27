@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import { openDirectory } from '../../electron/renderer'
+import { openDirectory } from '@/electron/renderer'
 import { ipcRenderer } from 'electron'
 import fs from 'fs'
 
