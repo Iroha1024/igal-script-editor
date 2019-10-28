@@ -15,7 +15,7 @@ ipcMain.on('open-directory-dialog', event => {
 ipcMain.on('read-file', (event, path) => {
     const file = fs.readFileSync(path, {encoding:'binary'})
     const buf = new Buffer(file, 'binary')
-    event.returnValue = iconv.decode(buf, 'utf-8')
+    event.returnValue = iconv.decode(buf, 'gbk')
 })
 
 

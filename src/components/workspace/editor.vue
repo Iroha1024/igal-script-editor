@@ -28,6 +28,8 @@ export default {
     },
     created() {
         this.getContent()
+    },
+    mounted() {
         this.bindKeyEvent()
     },
     methods: {
@@ -60,5 +62,6 @@ export default {
 <style lang="scss" scoped>
     .editor {
         flex: 1;
+        overflow-y: scroll;
     }
 </style>
