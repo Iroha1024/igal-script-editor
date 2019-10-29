@@ -11,7 +11,7 @@ import { ipcRenderer } from 'electron'
 import Mousetrap from 'mousetrap'
 
 import igal from 'components/editor/igal/igal'
-import Type from '@/shortcutKey'
+import Type from 'utils/shortcutKey'
 
 export default {
     data() {

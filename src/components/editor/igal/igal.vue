@@ -9,11 +9,11 @@ import fs from 'fs'
 
 import { ipcRenderer } from 'electron'
 
-import paragraph from './paragraph'
-import Type from '@/shortcutKey'
+import paragraph from './paragraph/paragraph'
+import Type from 'utils/shortcutKey'
+import Mark from 'utils/mark'
 
 export default {
-    name: 'igal',
     data() {
         return {
             list: []
@@ -37,7 +37,7 @@ export default {
                 nodeList = nodeList.map(node => {
                     if (node.nodeType === 3) {
                         return node
-                    } else if (node.nodeName === 'BR') {
+                    } else if (node.nodeName === 'BR' && node.className === 'br') {
                         return null
                     } else {
                         return getTextNode(node).flat()
@@ -47,16 +47,16 @@ export default {
                 return nodeList
             }
             this.$on(Type.save, () => {
-                 let nodeList = getTextNode(this.$refs.igal)
+                let nodeList = getTextNode(this.$refs.igal)
                 console.log(nodeList);
                 let data = ''
-                // nodeList.forEach(node =>{
-                //     if (node) {
-                //         data += node[0].nodeValue
-                //     }
-                //     data += '\r\n'
-                // })
-                // console.log(data);
+                nodeList.forEach(node =>{
+                    if (node) {
+                        data += node.nodeValue
+                    }
+                    data += '\r\n'
+                })
+                console.log(data);
                 // fs.writeFile(this.path, data, (err) => {
                 //     if (err) throw err
                 //     this.update()
@@ -77,10 +77,6 @@ export default {
         },
         analysisContent() {
             let content = this.content.split('\r\n')
-            const header_start = '##'
-            const header_end = '###'
-            const footer_start = '--'
-            const footer_end = '---'
             const queryString = (start, end, type) => {
                 for (let i = 0, prev = 0, next = 0, num = 0; i < content.length; i++) {
                     const item = content[i]
@@ -100,10 +96,42 @@ export default {
                     }
                 }
             }
-            queryString(header_start, header_end, 'header')
-            queryString(header_end, footer_start, 'main')
-            queryString(footer_start, footer_end, 'footer')
+            queryString(Mark.header_start, Mark.header_end, 'header')
+            queryString(Mark.header_end, Mark.footer_start, 'main')
+            queryString(Mark.footer_start, Mark.footer_end, 'footer')
             // console.log(content);
+            // console.log(this.list);
+            const changeMain = index => {
+                let main = this.list[index].main
+                let arr = [],
+                    temp = []
+                for (let i = 0; i < main.length; i++) {
+                    const element = main[i]
+                    if (element === '') {
+                        if (temp.length) {
+                            arr.push(temp)
+                            temp = []
+                        }
+                        arr.push(element)
+                    } else {
+                        if (element.includes('>') && temp.length) {
+                            arr.push(temp)
+                            temp = []
+                        }
+                        if (element.includes('>')) {
+                            temp.push({ name: element, text: [] })
+                        } else {
+                            temp[0].text.push(element)
+                        }
+                    }
+                }
+                temp.length && arr.push(temp)
+                // console.log(arr);
+                this.list[index].main = arr
+            }
+            for (let i = 0; i < this.list.length; i++) {
+                changeMain(i)
+            }
             // console.log(this.list);
         },
     }
