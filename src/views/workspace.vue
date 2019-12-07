@@ -6,18 +6,18 @@
 </template>
 
 <script>
-import fileManage from './fileManage'
+import fileManage from '@/components/workspace/fileManage'
 export default {
     components: {
-        fileManage
-    }
+        fileManage,
+    },
 }
 </script>
 
 <style lang="scss" scoped>
-    .workspace {
-        display: flex;
-        height: inherit;
-        overflow: hidden;
-    }
+.workspace {
+    display: flex;
+    height: inherit;
+    overflow: hidden;
+}
 </style>

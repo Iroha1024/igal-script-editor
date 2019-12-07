@@ -1,4 +1,4 @@
-const { ipcRenderer } = require('electron')
+import { ipcRenderer } from 'electron'
 
 export function openDirectory(target) {
     target.addEventListener('click', () => {

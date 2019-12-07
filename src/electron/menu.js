@@ -5,14 +5,14 @@ const menu = [
             {
                 label: '新建文件夹',
             },
-            { 
-                type: 'separator' 
+            {
+                type: 'separator',
             },
             {
-                label: '新建文件'
-            }
-        ]
-    }
+                label: '新建文件',
+            },
+        ],
+    },
 ]
 
-export default menu
+export { menu }

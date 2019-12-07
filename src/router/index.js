@@ -7,26 +7,26 @@ const routes = [
     {
         path: '/',
         name: 'workspace',
-        component: () => import('../components/workspace/workspace'),
+        component: () => import('@/views/workspace'),
         children: [
             {
                 path: 'file/:path',
                 name: 'file',
-                component: () => import('../components/workspace/editor'),
-                props: true
-            }
-        ]
+                component: () => import('@/components/workspace/editor'),
+                props: true,
+            },
+        ],
     },
     {
         path: '*',
-        redirect: '/'
-    }
+        redirect: '/',
+    },
 ]
 
 const router = new VueRouter({
     mode: 'history',
     base: process.env.BASE_URL,
-    routes
+    routes,
 })
 
 const routerPush = VueRouter.prototype.push

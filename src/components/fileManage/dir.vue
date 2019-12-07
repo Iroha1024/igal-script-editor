@@ -1,44 +1,48 @@
 <script>
 export default {
     props: {
-        files: Array
+        files: Array,
     },
     render(h) {
         const dirWrapper = arr => {
-            return h('div', {
-                'class': {
-                    dirWrapper: true
-                }
-            }, arr)
+            return h(
+                'div',
+                {
+                    class: {
+                        dirWrapper: true,
+                    },
+                },
+                arr
+            )
         }
         const dir = (info, indent) => {
             return h('div', {
-                'class': {
-                    dir: true
+                class: {
+                    dir: true,
                 },
                 style: {
-                    textIndent: indent + 'px'
+                    textIndent: indent + 'px',
                 },
                 domProps: {
-                    innerHTML: info.name
-                }
+                    innerHTML: info.name,
+                },
             })
         }
         const file = (info, indent) => {
             return h('div', {
-                'class': {
-                    file: true
+                class: {
+                    file: true,
                 },
                 style: {
-                    textIndent: indent + 'px'
+                    textIndent: indent + 'px',
                 },
                 domProps: {
-                    innerHTML: info.name
+                    innerHTML: info.name,
                 },
                 on: {
                     click: () => {
                         this.$router.push({ path: `/file/${info.path}` })
-                    }
+                    },
                 },
             })
         }
@@ -72,28 +76,28 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-    @mixin hover() {
-        &:hover {
-            cursor: pointer;
-            background-color: rgba(255, 255, 255, 0.8);
-        }
+@mixin hover() {
+    &:hover {
+        cursor: pointer;
+        background-color: rgba(255, 255, 255, 0.8);
     }
-    @mixin item() {
-        margin: 3px 0;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
+}
+@mixin item() {
+    margin: 3px 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.dirWrapper {
+    font-size: 22px;
+    line-height: 30px;
+    .dir {
+        @include hover;
+        @include item;
     }
-    .dirWrapper {
-        font-size: 22px;
-        line-height: 30px;
-        .dir {
-            @include hover;
-            @include item;
-        }
-        .file {
-            @include hover;
-            @include item;
-        }
+    .file {
+        @include hover;
+        @include item;
     }
+}
 </style>

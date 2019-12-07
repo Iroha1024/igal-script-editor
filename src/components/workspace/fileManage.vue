@@ -19,11 +19,11 @@ export default {
     data() {
         return {
             showMenu: false,
-            files: []
+            files: [],
         }
     },
     components: {
-        dir
+        dir,
     },
     mounted() {
         this.bindEvent()
@@ -41,12 +41,21 @@ export default {
             ipcRenderer.on('select-dir', (event, path) => {
                 this.files = []
                 let dirPath = path[0]
+                this.getDirPath(dirPath)
                 if (dirPath) {
                     this.files.push({ path: dirPath, type: 'dir' })
                     this.getDirContents(dirPath, this.files)
                     // console.log(this.files);
                 }
             })
+        },
+        //获取项目文件路径
+        getDirPath(path) {
+            this.$store.commit('setDirPath', path)
+        },
+        //获取配置信息路径
+        getSettingJson(path) {
+            this.$store.commit('setConfigPath', path)
         },
         // 获取文件夹内信息，传入files
         getDirContents(path, parent) {
@@ -57,6 +66,9 @@ export default {
                     newParent.push({ path: `${path}\\${file}`, type: 'dir' })
                     this.getDirContents(`${path}\\${file}`, newParent)
                 } else {
+                    if (file === 'setting.json') {
+                        this.getSettingJson(`${path}\\${file}`)
+                    }
                     parent.push({ path: `${path}\\${file}`, type: 'file' })
                 }
             })
@@ -92,52 +104,52 @@ export default {
             window.addEventListener('mouseup', () => {
                 dragging = false
             })
-        }
+        },
     },
 }
 </script>
 
 <style lang="scss" scoped>
-    $borderline-width: 10px;
-    .file-manage {
-        width: 250px;
-        min-width: 200px;
-        max-width: 400px;
-        flex-shrink: 0;
-        height: inherit;
-        position: relative;
-        background-color: #e9e9e9;
-        box-sizing: border-box;
-        padding: $borderline-width 2 * $borderline-width;
-        overflow: hidden scroll;
-        .context-menu {
-            width: 150px;
-            position: absolute;
-            font-size: 18px;
-            background-color: #fff;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: fit-content;
-            .menu-item {
-                padding: 10px 20px;
-                &:hover {
-                    cursor: pointer;
-                    background-color: #91c0ff;
-                }
-            }
-            .menu-item+.menu-item {
-                border-top: 1px solid #ccc;
+$borderline-width: 10px;
+.file-manage {
+    width: 250px;
+    min-width: 200px;
+    max-width: 400px;
+    flex-shrink: 0;
+    height: inherit;
+    position: relative;
+    background-color: #e9e9e9;
+    box-sizing: border-box;
+    padding: $borderline-width 2 * $borderline-width;
+    overflow: hidden scroll;
+    .context-menu {
+        width: 150px;
+        position: absolute;
+        font-size: 18px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: fit-content;
+        .menu-item {
+            padding: 10px 20px;
+            &:hover {
+                cursor: pointer;
+                background-color: #91c0ff;
             }
         }
-        #resize {
-            height: inherit;
-            position: absolute;
-            width: $borderline-width;
-            top: 0;
-            margin-left: calc(100% - 3 * #{$borderline-width});
-            &:hover {
-                cursor: e-resize;
-            }
+        .menu-item + .menu-item {
+            border-top: 1px solid #ccc;
         }
     }
+    #resize {
+        height: inherit;
+        position: absolute;
+        width: $borderline-width;
+        top: 0;
+        margin-left: calc(100% - 3 * #{$borderline-width});
+        &:hover {
+            cursor: e-resize;
+        }
+    }
+}
 </style>

@@ -1,48 +1,46 @@
 <template>
     <div class="editor">
-        <component :is="component" :content.sync="content" :path="path" ref="file"></component>
+        <component :is="fileType" :path="path" ref="file"></component>
     </div>
 </template>
 
 <script>
 import path from 'path'
+import fs from 'fs'
 
-import { ipcRenderer } from 'electron'
 import Mousetrap from 'mousetrap'
 
-import igal from 'components/editor/igal/igal'
-import Type from 'utils/shortcutKey'
+import igal from '@/components/editor/igal/igal'
+import Type from '@/utils/shortcutKey'
 
 export default {
     data() {
         return {
-            content: '',
-            component: ''
+            fileType: '',
         }
     },
     props: {
         path: String,
     },
     components: {
-        igal
+        igal,
     },
     created() {
-        this.getContent()
+        this.open()
     },
     mounted() {
         this.bindKeyEvent()
     },
     methods: {
-        //获取文件内容，打开对应格式组件
-        getContent() {
-            this.content = ipcRenderer.sendSync('read-file', this.path)
+        //打开对应格式组件
+        open() {
             const fileType = path.extname(this.path)
             switch (fileType) {
                 case '.igal':
-                    this.component = 'igal'
-                    break;
+                    this.fileType = 'igal'
+                    break
                 default:
-                    break;
+                    break
             }
             // console.log(this.path, this.content);
         },
@@ -54,14 +52,14 @@ export default {
             Mousetrap.bind(Type.save, () => {
                 this.$refs['file'].$emit(Type.save)
             })
-        }
+        },
     },
 }
 </script>
 
 <style lang="scss" scoped>
-    .editor {
-        flex: 1;
-        overflow-y: scroll;
-    }
+.editor {
+    flex: 1;
+    overflow-y: scroll;
+}
 </style>

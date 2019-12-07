@@ -1,5 +1,5 @@
 const Type = {
-    save: 'ctrl+s'
+    save: 'ctrl+s',
 }
 
 export default Type

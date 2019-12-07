@@ -5,15 +5,12 @@
 </template>
 
 <style lang="scss">
-    @import '@/assets/css/reset';
-    html {
-        height: 100%;
-        font-size: 25px;
-    }
-    body {
-        height: inherit;
-    }
-    #app {
-        height: inherit;
-    }
+html {
+    height: 100%;
+    font-size: 25px;
+}
+body,
+#app {
+    height: inherit;
+}
 </style>
