@@ -38,7 +38,7 @@ export default {
                 data: [],
                 links: [],
             },
-            showEcharts: true,
+            showEcharts: false,
         }
     },
     props: {
@@ -51,6 +51,7 @@ export default {
     created() {
         readIgal(this.path, this.list)
         // console.log(this.$store.state.dirPath, this.$store.state.configPath);
+        // console.log(this.list);
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
     },
 }
