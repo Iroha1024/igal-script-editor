@@ -6,20 +6,19 @@ function resolve(dir) {
 
 module.exports = {
     chainWebpack: config => {
-        config.resolve.symlinks(true);
-        config.resolve.alias
-            .set('@', resolve('src'))
+        config.resolve.symlinks(true)
+        config.resolve.alias.set('@', resolve('src'))
     },
     css: {
         loaderOptions: {
-            // sass: {
-            //     data: `@import "~@/assets/css/variable.scss";@import "~@/assets/css/mixin.scss";`
-            // }
-        }
+            sass: {
+                prependData: `@import "~@/assets/css/global.scss";`,
+            },
+        },
     },
     pluginOptions: {
         // electronBuilder: {
         //     productName: ''
         // }
-    }
+    },
 }

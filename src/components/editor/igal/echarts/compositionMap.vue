@@ -69,5 +69,6 @@ export default {
 <style lang="scss" scoped>
 .map {
     position: fixed;
+    z-index: 100;
 }
 </style>

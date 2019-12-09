@@ -1,17 +1,21 @@
 <template>
-    <div class="file-manage" ref="fileArea">
-        <dir :files="files"></dir>
-        <div class="context-menu" v-show="showMenu" ref="contextMenu">
-            <div class="menu-item" ref="openDir">打开文件夹</div>
+    <div class="file-manage">
+        <div class="resize-drag" ref="fileArea">
+            <dir :files="files"></dir>
+            <div class="context-menu" v-show="showMenu" ref="contextMenu">
+                <div class="menu-item" ref="openDir">打开文件夹</div>
+            </div>
         </div>
-        <div id="resize"></div>
     </div>
 </template>
 
 <script>
+import fs from 'fs'
+
+import interact from 'interactjs'
+
 import { openDirectory } from '@/electron/renderer'
 import { ipcRenderer } from 'electron'
-import fs from 'fs'
 
 import dir from '../fileManage/dir'
 
@@ -80,8 +84,8 @@ export default {
             fileArea.addEventListener('contextmenu', event => {
                 if (event.target !== event.currentTarget) return
                 this.showMenu = true
-                contextMenu.style.top = fileArea.scrollTop + event.pageY + 'px'
-                contextMenu.style.left = `${event.pageX}px`
+                contextMenu.style.top = event.clientY + 'px'
+                contextMenu.style.left = event.clientX + 'px'
             })
             window.addEventListener('click', () => {
                 this.showMenu = false
@@ -89,66 +93,84 @@ export default {
         },
         //调整文件区大小
         resize() {
-            const borderline = document.getElementById('resize')
-            const fileArea = this.$refs.fileArea
-            let dragging = false
-            borderline.addEventListener('mousedown', () => {
-                dragging = true
-            })
-            window.addEventListener('mousemove', event => {
-                if (dragging) {
-                    let width = fileArea.offsetWidth
-                    fileArea.style.width = event.clientX + 'px'
-                }
-            })
-            window.addEventListener('mouseup', () => {
-                dragging = false
-            })
+            interact('.resize-drag')
+                .resizable({
+                    // resize from all edges and corners
+                    edges: { right: true },
+
+                    modifiers: [
+                        // keep the edges inside the parent
+                        interact.modifiers.restrictEdges({
+                            outer: 'parent',
+                            endOnly: true,
+                        }),
+
+                        // minimum size
+                        interact.modifiers.restrictSize({
+                            min: { width: 250 },
+                        }),
+                    ],
+
+                    inertia: {
+                        resistance: 30,
+                        minSpeed: 200,
+                        endSpeed: 100,
+                    },
+                })
+                .on('resizemove', event => {
+                    let { x, y } = event.target.dataset
+
+                    x = parseFloat(x) || 0
+                    y = parseFloat(y) || 0
+
+                    Object.assign(event.target.style, {
+                        width: `${event.rect.width}px`,
+                        height: `${event.rect.height}px`,
+                        transform: `translate(${event.deltaRect.left}px, ${event.deltaRect.top}px)`,
+                    })
+
+                    Object.assign(event.target.dataset, { x, y })
+                })
         },
     },
 }
 </script>
 
 <style lang="scss" scoped>
-$borderline-width: 10px;
 .file-manage {
-    width: 250px;
-    min-width: 200px;
-    max-width: 400px;
+    min-width: 250px;
     flex-shrink: 0;
     height: inherit;
-    position: relative;
     background-color: #e9e9e9;
-    box-sizing: border-box;
-    padding: $borderline-width 2 * $borderline-width;
-    overflow: hidden scroll;
-    .context-menu {
-        width: 150px;
-        position: absolute;
-        font-size: 18px;
-        background-color: #fff;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        width: fit-content;
-        .menu-item {
-            padding: 10px 20px;
-            &:hover {
-                cursor: pointer;
-                background-color: #91c0ff;
-            }
-        }
-        .menu-item + .menu-item {
-            border-top: 1px solid #ccc;
-        }
-    }
-    #resize {
+    user-select: none;
+    .resize-drag {
+        max-width: 400px;
         height: inherit;
-        position: absolute;
-        width: $borderline-width;
-        top: 0;
-        margin-left: calc(100% - 3 * #{$borderline-width});
-        &:hover {
-            cursor: e-resize;
+        padding: 0px 5px;
+        border: 5px solid transparent;
+        box-sizing: border-box;
+        height: inherit;
+        touch-action: none;
+        overflow: hidden scroll;
+        box-shadow: #bababa 4px 0px 8px;
+        .context-menu {
+            width: 150px;
+            position: absolute;
+            font-size: 18px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: fit-content;
+            .menu-item {
+                padding: 10px 20px;
+                &:hover {
+                    cursor: pointer;
+                    background-color: $nomral-button-color;
+                }
+            }
+            .menu-item + .menu-item {
+                border-top: 1px solid #ccc;
+            }
         }
     }
 }

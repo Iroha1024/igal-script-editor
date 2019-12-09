@@ -66,6 +66,7 @@ export default {
     word-break: break-all;
     outline: none;
     .show {
+        z-index: 101;
         $width: 50px;
         position: fixed;
         right: 40px;
@@ -74,12 +75,12 @@ export default {
         height: $width;
         line-height: $width;
         border-radius: $width / 2;
-        background: #61a7f1;
+        background-color: $nomral-button-color;
         user-select: none;
         text-align: center;
         &:hover {
             cursor: pointer;
-            background: #46f88e;
+            background-color: $add-color;
         }
     }
 }

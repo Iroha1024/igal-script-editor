@@ -59,7 +59,14 @@ export default function readIgal(path, igal) {
                         const keyValue = part[index].split(' ')
                         const key = keyValue[0]
                         const value = keyValue[1]
-                        sequence[key] = value
+                        if (key === 'uuid') {
+                            sequence[key] = value
+                        } else {
+                            if (!sequence.customized) {
+                                sequence.customized = {}
+                            }
+                            sequence.customized[key] = value
+                        }
                     }
                     break
                 case Mark.sentence:

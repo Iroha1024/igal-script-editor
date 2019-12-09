@@ -1,4 +1,4 @@
-^uuid 1|description sequence1
+^uuid 1|description sequence1|test 123
 >人物1>语句1测试（\>\\|）|语句2>备注1|备注2
 >人物2>语句3|语句4>备注3|备注4
 >>语句4>备注5

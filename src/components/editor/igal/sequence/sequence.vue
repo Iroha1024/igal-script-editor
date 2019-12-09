@@ -2,7 +2,15 @@
     <div class="sequence">
         <header>
             <div class="uuid" contenteditable="false">{{ sequence.uuid }}</div>
-            <div class="desc">{{ sequence.description }}</div>
+            <div
+                class="customized-info"
+                v-for="(key, index) of Object.keys(sequence.customized)"
+            >
+                <delete-button class="customized-info--delete"></delete-button>
+                <div class="key" contenteditable="false">{{ key }}</div>
+                <div class="value">{{ sequence.customized[key] }}</div>
+            </div>
+            <add-button class="customized-info--add"></add-button>
         </header>
         <main>
             <component
@@ -22,10 +30,10 @@
                 <div class="text" :class="{ 'show-text': isShowAll }">
                     {{ uuid }}
                 </div>
-                <div
-                    class="delete iconfont icon-minus-bold"
-                    @click="removeSequence(index)"
-                ></div>
+                <delete-button
+                    class="text--delete"
+                    @click.native="removeSequence(index)"
+                ></delete-button>
             </div>
             <div class="next">
                 <input
@@ -47,11 +55,11 @@
                         <template v-else>{{ uuid }}</template>
                     </li>
                 </ul>
-                <div class="add iconfont icon-plus-bold"></div>
+                <add-button class="list--add"></add-button>
             </div>
             <div
                 class="show-all iconfont"
-                :class="iconClass"
+                :class="[isShowAll ? 'icon-xianshi' : 'icon-icon-eye-close']"
                 @click="toggleShowAll()"
             ></div>
         </footer>
@@ -59,6 +67,8 @@
 </template>
 
 <script>
+import addButton from '@/components/button/add-button'
+import deleteButton from '@/components/button/delete-button'
 import sentence from './sentence'
 import linebreak from './linebreak'
 import branch from './branch'
@@ -68,6 +78,8 @@ export default {
         sequence: Object,
     },
     components: {
+        addButton,
+        deleteButton,
         sentence,
         linebreak,
         branch,
@@ -111,11 +123,6 @@ export default {
             this.isShowAll = !this.isShowAll
         },
     },
-    computed: {
-        iconClass() {
-            return this.isShowAll ? 'icon-xianshi' : 'icon-icon-eye-close'
-        },
-    },
 }
 </script>
 
@@ -127,14 +134,26 @@ export default {
     margin-bottom: 20px;
     header {
         .uuid {
-            background: #ccc;
+            background-color: #ccc;
+        }
+        .customized-info {
+            display: flex;
+            line-height: 40px;
+            .customized-info--delete {
+                margin: 5px;
+                &:hover {
+                    background-color: $delete-color;
+                }
+            }
+            .key {
+                flex: 0 0 20%;
+            }
+        }
+        .customized-info--add {
+            margin: 5px;
         }
     }
     footer {
-        $width: 30px;
-        $nomral-color: #59e6ff;
-        $delete-color: #e65454;
-        $add-color: #b1f8bb;
         $text-bg-color: #fff;
         $list-bg-color: #eeefda;
         $warning-bg-color: #f74040;
@@ -144,18 +163,18 @@ export default {
         display: flex;
         flex-wrap: wrap;
         & > * {
-            margin-right: $width / 2;
-            margin-top: $width / 2;
+            margin-right: $button-size / 2;
+            margin-top: $button-size / 2;
             cursor: pointer;
         }
         .next {
             display: flex;
             position: relative;
-            min-width: $width;
-            height: $width;
-            line-height: $width;
-            border-radius: $width / 2;
-            background-color: $nomral-color;
+            min-width: $button-size;
+            height: $button-size;
+            line-height: $button-size;
+            border-radius: $button-size / 2;
+            background-color: $nomral-button-color;
             @include anime;
             .text {
                 max-width: 0;
@@ -163,12 +182,7 @@ export default {
                 overflow: hidden;
                 @include anime;
             }
-            .delete {
-                width: $width;
-                height: inherit;
-                text-align: center;
-                border-radius: $width / 2;
-                background-color: $nomral-color;
+            .text--delete {
                 &:hover {
                     background-color: $delete-color;
                 }
@@ -184,12 +198,12 @@ export default {
             }
             .list {
                 position: absolute;
-                top: $width;
+                top: $button-size;
                 min-width: 200px;
                 max-width: 300px;
                 max-height: 0;
                 overflow: hidden;
-                border-radius: $width / 2;
+                border-radius: $button-size / 2;
                 background-color: $list-bg-color;
                 @include anime;
                 li {
@@ -213,25 +227,20 @@ export default {
                     border-top: 1px solid;
                 }
             }
-            .add {
-                width: $width;
-                max-width: $width;
-                height: inherit;
+            .list--add {
+                max-width: $button-size;
                 overflow: hidden;
-                text-align: center;
-                border-radius: $width / 2;
-                background-color: $add-color;
                 @include anime;
             }
             &:hover {
                 background-color: $text-bg-color;
                 .text {
                     max-width: 200px;
-                    padding: 0 $width / 2;
+                    padding: 0 $button-size / 2;
                 }
                 .search {
                     max-width: 200px;
-                    padding: 0 $width / 2;
+                    padding: 0 $button-size / 2;
                     font-size: 25px;
                     background-color: $text-bg-color;
                 }
@@ -239,21 +248,21 @@ export default {
                     max-height: 120px;
                     overflow: hidden scroll;
                 }
-                .add {
+                .list--add {
                     max-width: 0;
                 }
             }
             .show-text {
                 max-width: 200px;
-                padding: 0 $width / 2;
+                padding: 0 $button-size / 2;
             }
         }
         .bg-color {
             background-color: $text-bg-color;
         }
         .show-all {
-            width: $width;
-            height: $width;
+            width: $button-size;
+            height: $button-size;
             font-size: 28px;
         }
     }

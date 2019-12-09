@@ -48,7 +48,8 @@ export default {
         }
         const renderDOM = (files, indent) => {
             let arr = []
-            indent += 20
+            const indentVal = 15
+            indent += indentVal
             for (let i = 0; i < files.length; i++) {
                 const item = files[i]
                 if (!Array.isArray(item)) {
@@ -60,7 +61,7 @@ export default {
                     } else if (item.type === 'dir') {
                         const name = item.path.split('\\').pop()
                         item.name = name
-                        const _dir = dir(item, indent - 20)
+                        const _dir = dir(item, indent - indentVal)
                         arr.push(_dir)
                     }
                 } else {

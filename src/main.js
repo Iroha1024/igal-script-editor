@@ -1,5 +1,5 @@
 import '@/assets/css/reset.css'
-import '@/assets/css/scrollbar.css'
+import '@/assets/css/scrollbar.scss'
 
 import Vue from 'vue'
 import App from './App.vue'
