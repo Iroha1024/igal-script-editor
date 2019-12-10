@@ -6,11 +6,18 @@
                 class="customized-info"
                 v-for="(key, index) of Object.keys(sequence.customized)"
             >
-                <delete-button class="customized-info--delete"></delete-button>
+                <!-- <delete-button class="customized-info--delete" contenteditable="false" @click.native="removeInfo(key)"></delete-button> -->
                 <div class="key" contenteditable="false">{{ key }}</div>
                 <div class="value">{{ sequence.customized[key] }}</div>
             </div>
-            <add-button class="customized-info--add"></add-button>
+            <!-- <div class="customized-info--input">
+                <template v-if="!isShowInput">
+                    <add-button class="customized-info--add" contenteditable="false" @click.native="toggleShowInput"></add-button>
+                </template>
+                <template v-else>
+                    <confirm-button class="customized-info--confirm" contenteditable="false" @click.native="toggleShowInput"></confirm-button>
+                </template>
+            </div> -->
         </header>
         <main>
             <component
@@ -23,11 +30,11 @@
         <footer contenteditable="false">
             <div
                 class="next"
-                :class="{ 'bg-color': isShowAll }"
+                :class="{ 'bg-color': isShowNext }"
                 v-for="(uuid, index) of sequence.next"
                 :key="index"
             >
-                <div class="text" :class="{ 'show-text': isShowAll }">
+                <div class="text" :class="{ 'show-text': isShowNext }">
                     {{ uuid }}
                 </div>
                 <delete-button
@@ -59,8 +66,8 @@
             </div>
             <div
                 class="show-all iconfont"
-                :class="[isShowAll ? 'icon-xianshi' : 'icon-icon-eye-close']"
-                @click="toggleShowAll()"
+                :class="[isShowNext ? 'icon-xianshi' : 'icon-icon-eye-close']"
+                @click="toggleShowNext()"
             ></div>
         </footer>
     </div>
@@ -69,6 +76,7 @@
 <script>
 import addButton from '@/components/button/add-button'
 import deleteButton from '@/components/button/delete-button'
+import confirmButton from '@/components/button/confirm-button'
 import sentence from './sentence'
 import linebreak from './linebreak'
 import branch from './branch'
@@ -80,6 +88,7 @@ export default {
     components: {
         addButton,
         deleteButton,
+        confirmButton,
         sentence,
         linebreak,
         branch,
@@ -87,7 +96,8 @@ export default {
     data() {
         return {
             input: '',
-            isShowAll: false,
+            // isShowInput: false,
+            isShowNext: false,
             data: this.sequence.data,
             next: [
                 '9125a8dc-52ee-365b-a5aa-81b0b3681cf6',
@@ -99,6 +109,14 @@ export default {
         }
     },
     methods: {
+        //----------------------------------------header----------------------------------------
+        // removeInfo(key) {
+        //     this.$delete(this.sequence.customized, key)
+        // },
+        // toggleShowInput() {
+        //     this.isShowInput = !this.isShowInput
+        // },
+        //----------------------------------------footer----------------------------------------
         removeSequence(index) {
             this.sequence.next.splice(index, 1)
         },
@@ -119,8 +137,8 @@ export default {
             if (this.input === '') return true
             return uuid.startsWith(this.input)
         },
-        toggleShowAll() {
-            this.isShowAll = !this.isShowAll
+        toggleShowNext() {
+            this.isShowNext = !this.isShowNext
         },
     },
 }
@@ -133,25 +151,39 @@ export default {
     padding: 10px;
     margin-bottom: 20px;
     header {
+        // @mixin button-spacing {
+        //     margin: 5px 5px 5px 0;
+        // }
         .uuid {
             background-color: #ccc;
         }
         .customized-info {
             display: flex;
+            align-items: center;
             line-height: 40px;
-            .customized-info--delete {
-                margin: 5px;
-                &:hover {
-                    background-color: $delete-color;
-                }
-            }
+            // .customized-info--delete {
+            //     @include button($delete-color);
+            //     @include button-spacing;
+            // }
             .key {
                 flex: 0 0 20%;
+                user-select: none;
+            }
+            .value {
+                flex: 1;
             }
         }
-        .customized-info--add {
-            margin: 5px;
-        }
+        // .customized-info--input {
+        //     .customized-info--add {
+        //         @include button($add-color);
+        //         @include button-spacing;
+        //     }
+        //     .customized-info--confirm {
+        //         font-weight: bold;
+        //         @include button($add-color);
+        //         @include button-spacing;
+        //     }
+        // }
     }
     footer {
         $text-bg-color: #fff;
@@ -162,6 +194,7 @@ export default {
         }
         display: flex;
         flex-wrap: wrap;
+        user-select: none;
         & > * {
             margin-right: $button-size / 2;
             margin-top: $button-size / 2;
@@ -183,9 +216,7 @@ export default {
                 @include anime;
             }
             .text--delete {
-                &:hover {
-                    background-color: $delete-color;
-                }
+                @include button($delete-color);
             }
             .search {
                 max-width: 0;
@@ -231,6 +262,7 @@ export default {
                 max-width: $button-size;
                 overflow: hidden;
                 @include anime;
+                @include button;
             }
             &:hover {
                 background-color: $text-bg-color;

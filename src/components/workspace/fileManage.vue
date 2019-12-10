@@ -152,7 +152,6 @@ export default {
         height: inherit;
         touch-action: none;
         overflow: hidden scroll;
-        box-shadow: #bababa 4px 0px 8px;
         .context-menu {
             width: 150px;
             position: absolute;

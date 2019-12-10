@@ -51,7 +51,7 @@ export default {
     created() {
         readIgal(this.path, this.list)
         // console.log(this.$store.state.dirPath, this.$store.state.configPath);
-        // console.log(this.list);
+        console.log(this.list)
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
     },
 }
@@ -65,23 +65,14 @@ export default {
     line-height: 30px;
     word-break: break-all;
     outline: none;
+    box-sizing: border-box;
     .show {
         z-index: 101;
-        $width: 50px;
         position: fixed;
         right: 40px;
         top: 50px;
-        width: $width;
-        height: $width;
-        line-height: $width;
-        border-radius: $width / 2;
-        background-color: $nomral-button-color;
-        user-select: none;
-        text-align: center;
-        &:hover {
-            cursor: pointer;
-            background-color: $add-color;
-        }
+        $width: 50px;
+        @include button($add-color, $width);
     }
 }
 </style>
