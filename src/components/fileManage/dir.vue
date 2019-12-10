@@ -80,7 +80,7 @@ export default {
 @mixin hover() {
     &:hover {
         cursor: pointer;
-        background-color: rgba(255, 255, 255, 0.8);
+        background-color: $list-hover-color;
     }
 }
 @mixin item() {

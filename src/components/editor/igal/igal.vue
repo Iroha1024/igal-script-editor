@@ -4,13 +4,11 @@
             :echarts="echarts"
             v-show="showEcharts"
         ></composition-map>
-        <div
+        <echart-button
             class="show"
-            @click="showEcharts = !showEcharts"
+            @click.native="showEcharts = !showEcharts"
             contenteditable="false"
-        >
-            E
-        </div>
+        ></echart-button>
         <sequence
             v-for="(item, index) of list"
             :key="item.uuid"
@@ -24,9 +22,11 @@ import fs from 'fs'
 
 import sequence from './sequence/sequence'
 import compositionMap from './echarts/compositionMap'
+import echartButton from '@/components/button/echart-button'
 
 import Type from '@/utils/shortcutKey'
 import readIgal, { extraOperate } from '@/utils/readIgal'
+import saveIgal from '@/utils/saveIgal'
 
 export default {
     data() {
@@ -47,12 +47,22 @@ export default {
     components: {
         sequence,
         compositionMap,
+        echartButton,
     },
     created() {
-        readIgal(this.path, this.list)
+        readIgal(this.path, this.list, this.$store.state.configPath)
         // console.log(this.$store.state.dirPath, this.$store.state.configPath);
-        console.log(this.list)
+        // console.log(this.list)
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
+        this.save()
+    },
+    methods: {
+        save() {
+            this.$on(Type.save, () => {
+                console.log(this.list)
+                saveIgal(this.list, this.path)
+            })
+        },
     },
 }
 </script>
@@ -72,7 +82,13 @@ export default {
         right: 40px;
         top: 50px;
         $width: 50px;
-        @include button($add-color, $width);
+        font-size: 40px;
+        color: $nomral-button-color;
+        @include button(transparent, $width, transparent);
+        transition: all 0.5s;
+        &:hover {
+            transform: scale(1.5);
+        }
     }
 }
 </style>

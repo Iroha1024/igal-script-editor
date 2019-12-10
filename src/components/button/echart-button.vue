@@ -1,5 +1,5 @@
 <template>
-    <div class="iconfont icon-confirm"></div>
+    <div class="iconfont icon-chart1"></div>
 </template>
 
 <script>

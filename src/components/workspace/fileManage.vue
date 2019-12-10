@@ -32,7 +32,7 @@ export default {
     mounted() {
         this.bindEvent()
         this.getDirName()
-        this.rigthClick()
+        this.openMenu()
         this.resize()
     },
     methods: {
@@ -43,6 +43,7 @@ export default {
         //获取文件夹信息
         getDirName() {
             ipcRenderer.on('select-dir', (event, path) => {
+                if (path.length < 1) return
                 this.files = []
                 let dirPath = path[0]
                 this.getDirPath(dirPath)
@@ -65,7 +66,7 @@ export default {
         getDirContents(path, parent) {
             fs.readdirSync(path).forEach(file => {
                 if (fs.statSync(`${path}\\${file}`).isDirectory()) {
-                    let newParent = []
+                    const newParent = []
                     parent.push(newParent)
                     newParent.push({ path: `${path}\\${file}`, type: 'dir' })
                     this.getDirContents(`${path}\\${file}`, newParent)
@@ -78,7 +79,7 @@ export default {
             })
         },
         //右键菜单栏
-        rigthClick() {
+        openMenu() {
             const fileArea = this.$refs.fileArea
             const contextMenu = this.$refs.contextMenu
             fileArea.addEventListener('contextmenu', event => {
@@ -141,7 +142,7 @@ export default {
     min-width: 250px;
     flex-shrink: 0;
     height: inherit;
-    background-color: #e9e9e9;
+    background-color: $list-bg-color;
     user-select: none;
     .resize-drag {
         max-width: 400px;
@@ -157,7 +158,6 @@ export default {
             position: absolute;
             font-size: 18px;
             background-color: #fff;
-            border: 1px solid #ccc;
             border-radius: 5px;
             width: fit-content;
             .menu-item {

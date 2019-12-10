@@ -1,42 +1,24 @@
 import fs from 'fs'
+import Mark, { Type, getLinebreak } from './mark'
+
 /**
  * 提取igal文件内容
  * @param {string} path  igal文件地址
  * @param {Array} igal  序列列表
+ * @param {string} setting  setting.json地址
  */
-export default function readIgal(path, igal) {
+export default function readIgal(path, igal, setting) {
     const file = fs.readFileSync(path, 'utf-8')
 
-    /**
-     * igal标识符
-     */
-    const Mark = {
-        start: '^',
-        sentence: '>',
-        branch: '?',
-        end: '$',
-    }
-    /**
-     * 不同系统换行符
-     */
-    const linebreak = {
-        windows: '\r\n',
-        unix: '\n',
-        mac: '\r',
-    }
-    let separator
-    switch (process.platform) {
-        case 'darwin':
-            separator = linebreak.mac
-            break
-        case 'freebsd':
-            separator = linebreak.unix
-            break
-        case 'win32':
-            separator = linebreak.windows
-            break
-    }
+    let separator = getLinebreak()
+
     const content = file.split(separator)
+
+    let json
+    try {
+        json = JSON.parse(fs.readFileSync(setting, 'utf-8'))
+    } catch (error) {}
+    const customized = json.customized
 
     let sequence,
         data,
@@ -57,15 +39,19 @@ export default function readIgal(path, igal) {
                     part = line.split(/(?<!\\)\|/)
                     for (let index = 0; index < part.length; index++) {
                         const keyValue = part[index].split(' ')
-                        const key = keyValue[0]
-                        const value = keyValue[1]
+                        const [key, value] = keyValue
                         if (key === 'uuid') {
                             sequence[key] = value
                         } else {
                             if (!sequence.customized) {
                                 sequence.customized = {}
+                                customized.forEach(key => {
+                                    sequence.customized[key] = ''
+                                })
                             }
-                            sequence.customized[key] = value
+                            if (customized.includes(key)) {
+                                sequence.customized[key] = value
+                            }
                         }
                     }
                     break
@@ -75,7 +61,7 @@ export default function readIgal(path, igal) {
                     each_line.name = part[0]
                     each_line.text = part[1].split(/(?<!\\)\|/)
                     each_line.remark = part[2].split(/(?<!\\)\|/)
-                    each_line.type = 'sentence'
+                    each_line.type = Type.sentence
                     data.push(each_line)
                     break
                 case Mark.branch:
@@ -83,7 +69,7 @@ export default function readIgal(path, igal) {
                     const [question, ...choices] = part
                     each_line.question = question.slice(1)
                     each_line.choices = choices
-                    each_line.type = 'branch'
+                    each_line.type = Type.branch
                     data.push(each_line)
                     break
                 case Mark.end:
@@ -95,7 +81,7 @@ export default function readIgal(path, igal) {
                     break
                 default:
                     if (flag) {
-                        each_line.type = 'linebreak'
+                        each_line.type = Type.linebreak
                         data.push(each_line)
                     }
                     break

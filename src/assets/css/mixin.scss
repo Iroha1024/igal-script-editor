@@ -1,10 +1,10 @@
-@mixin button($default-hover-color: $nomral-button-color, $default-button-size: $button-size) {
+@mixin button($default-hover-color: $nomral-button-color, $default-button-size: $button-size, $nomral-bg-color: $nomral-button-color) {
     width: $default-button-size;
     height: $default-button-size;
     line-height: $default-button-size;
     text-align: center;
     border-radius: $default-button-size / 2;
-    background-color: $nomral-button-color;
+    background-color: $nomral-bg-color;
     cursor: pointer;
     user-select: none;
     &:hover {

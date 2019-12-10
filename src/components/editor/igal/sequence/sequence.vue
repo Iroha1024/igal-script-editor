@@ -1,23 +1,16 @@
 <template>
     <div class="sequence">
         <header>
-            <div class="uuid" contenteditable="false">{{ sequence.uuid }}</div>
+            <div class="uuid" contenteditable="false">{{ sequence.customized.title }} --> {{ sequence.uuid }}</div>
             <div
                 class="customized-info"
-                v-for="(key, index) of Object.keys(sequence.customized)"
+                v-for="([key, value], index) of Object.entries(
+                    sequence.customized
+                )"
             >
-                <!-- <delete-button class="customized-info--delete" contenteditable="false" @click.native="removeInfo(key)"></delete-button> -->
                 <div class="key" contenteditable="false">{{ key }}</div>
-                <div class="value">{{ sequence.customized[key] }}</div>
+                <div class="value">{{ value }}</div>
             </div>
-            <!-- <div class="customized-info--input">
-                <template v-if="!isShowInput">
-                    <add-button class="customized-info--add" contenteditable="false" @click.native="toggleShowInput"></add-button>
-                </template>
-                <template v-else>
-                    <confirm-button class="customized-info--confirm" contenteditable="false" @click.native="toggleShowInput"></confirm-button>
-                </template>
-            </div> -->
         </header>
         <main>
             <component
@@ -65,7 +58,7 @@
                 <add-button class="list--add"></add-button>
             </div>
             <div
-                class="show-all iconfont"
+                class="show-next iconfont"
                 :class="[isShowNext ? 'icon-xianshi' : 'icon-icon-eye-close']"
                 @click="toggleShowNext()"
             ></div>
@@ -76,7 +69,6 @@
 <script>
 import addButton from '@/components/button/add-button'
 import deleteButton from '@/components/button/delete-button'
-import confirmButton from '@/components/button/confirm-button'
 import sentence from './sentence'
 import linebreak from './linebreak'
 import branch from './branch'
@@ -88,7 +80,6 @@ export default {
     components: {
         addButton,
         deleteButton,
-        confirmButton,
         sentence,
         linebreak,
         branch,
@@ -96,7 +87,6 @@ export default {
     data() {
         return {
             input: '',
-            // isShowInput: false,
             isShowNext: false,
             data: this.sequence.data,
             next: [
@@ -109,13 +99,6 @@ export default {
         }
     },
     methods: {
-        //----------------------------------------header----------------------------------------
-        // removeInfo(key) {
-        //     this.$delete(this.sequence.customized, key)
-        // },
-        // toggleShowInput() {
-        //     this.isShowInput = !this.isShowInput
-        // },
         //----------------------------------------footer----------------------------------------
         removeSequence(index) {
             this.sequence.next.splice(index, 1)
@@ -151,20 +134,13 @@ export default {
     padding: 10px;
     margin-bottom: 20px;
     header {
-        // @mixin button-spacing {
-        //     margin: 5px 5px 5px 0;
-        // }
         .uuid {
-            background-color: #ccc;
+            background: linear-gradient(90deg, #0000002e, #ffffff00);
         }
         .customized-info {
             display: flex;
             align-items: center;
             line-height: 40px;
-            // .customized-info--delete {
-            //     @include button($delete-color);
-            //     @include button-spacing;
-            // }
             .key {
                 flex: 0 0 20%;
                 user-select: none;
@@ -173,22 +149,11 @@ export default {
                 flex: 1;
             }
         }
-        // .customized-info--input {
-        //     .customized-info--add {
-        //         @include button($add-color);
-        //         @include button-spacing;
-        //     }
-        //     .customized-info--confirm {
-        //         font-weight: bold;
-        //         @include button($add-color);
-        //         @include button-spacing;
-        //     }
-        // }
     }
     footer {
         $text-bg-color: #fff;
-        $list-bg-color: #eeefda;
-        $warning-bg-color: #f74040;
+        $warning-bg-color: #fc7171;
+        $delete-color: #e65454;
         @mixin anime() {
             transition: all 1s ease;
         }
@@ -244,7 +209,7 @@ export default {
                     padding: 0 10px;
                     overflow: hidden;
                     &:hover {
-                        background-color: $add-color;
+                        background-color: $list-hover-color;
                     }
                 }
                 .existed {
@@ -292,7 +257,7 @@ export default {
         .bg-color {
             background-color: $text-bg-color;
         }
-        .show-all {
+        .show-next {
             width: $button-size;
             height: $button-size;
             font-size: 28px;
