@@ -1,8 +1,11 @@
-^uuid 13|description sequence13
+^uuid 13|title |description sequence13
+
 $next 14|15
 
-^uuid 14|description sequence14
+^uuid 14|title |description sequence14
+
 $next 
 
-^uuid 15|description sequence15
+^uuid 15|title |description sequence15
+
 $next 

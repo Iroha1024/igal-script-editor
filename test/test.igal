@@ -19,11 +19,11 @@ $next 7
 $next 5|7
 
 ^uuid 5|title |description sequence5
-
+>人物2>语句3|语句4>备注3|备注4
 $next 7
 
 ^uuid 6|title |description sequence6
-
+>人物2>语句3|语句4>备注3|备注4
 $next 
 
 ^uuid 7|title |description sequence7

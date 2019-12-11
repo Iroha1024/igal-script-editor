@@ -11,49 +11,12 @@ export default {
     },
     data() {
         return {
-            data: this.echarts.data,
-            links: this.echarts.links,
             chart: null,
         }
     },
     mounted() {
         const map = this.$refs.map
-        const option = {
-            animationDurationUpdate: 1500,
-            animationEasingUpdate: 'quinticInOut',
-            series: [
-                {
-                    type: 'graph',
-                    layout: 'none',
-                    symbolSize: 50,
-                    roam: true,
-                    label: {
-                        normal: {
-                            show: true,
-                        },
-                    },
-                    edgeSymbol: ['circle', 'arrow'],
-                    edgeSymbolSize: [4, 10],
-                    edgeLabel: {
-                        normal: {
-                            textStyle: {
-                                fontSize: 20,
-                            },
-                        },
-                    },
-                    focusNodeAdjacency: true,
-                    data: this.data,
-                    links: this.links,
-                    lineStyle: {
-                        normal: {
-                            opacity: 0.9,
-                            width: 2,
-                            curveness: 0,
-                        },
-                    },
-                },
-            ],
-        }
+        const option = this.getOption()
         const parent = window.getComputedStyle(this.$parent.$el)
         const height = document.documentElement.clientHeight
         this.chart = echarts.init(map, '', { width: parent.width, height })
@@ -62,6 +25,55 @@ export default {
             const height = document.documentElement.clientHeight
             this.chart.resize({ width: parent.width, height })
         })
+    },
+    watch: {
+        echarts() {
+            const option = this.getOption()
+            this.chart.setOption(option)
+        },
+    },
+    methods: {
+        getOption() {
+            const data = this.echarts.data
+            const links = this.echarts.links
+            const option = {
+                animationDurationUpdate: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series: [
+                    {
+                        type: 'graph',
+                        layout: 'none',
+                        symbolSize: 50,
+                        roam: true,
+                        label: {
+                            normal: {
+                                show: true,
+                            },
+                        },
+                        edgeSymbol: ['circle', 'arrow'],
+                        edgeSymbolSize: [4, 10],
+                        edgeLabel: {
+                            normal: {
+                                textStyle: {
+                                    fontSize: 20,
+                                },
+                            },
+                        },
+                        focusNodeAdjacency: true,
+                        data,
+                        links,
+                        lineStyle: {
+                            normal: {
+                                opacity: 0.9,
+                                width: 2,
+                                curveness: 0,
+                            },
+                        },
+                    },
+                ],
+            }
+            return option
+        },
     },
 }
 </script>

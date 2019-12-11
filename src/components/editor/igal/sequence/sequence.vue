@@ -1,7 +1,9 @@
 <template>
     <div class="sequence">
         <header>
-            <div class="uuid" contenteditable="false">{{ sequence.customized.title }} --> {{ sequence.uuid }}</div>
+            <div class="title" contenteditable="false" v-show="showTitle">
+                {{ sequence.customized.title }} --> {{ sequence.uuid }}
+            </div>
             <div
                 class="customized-info"
                 v-for="([key, value], index) of Object.entries(
@@ -24,6 +26,7 @@
             <div
                 class="next"
                 :class="{ 'bg-color': isShowNext }"
+                v-if="uuid !== ''"
                 v-for="(uuid, index) of sequence.next"
                 :key="index"
             >
@@ -76,6 +79,10 @@ import branch from './branch'
 export default {
     props: {
         sequence: Object,
+        showTitle: {
+            type: Boolean,
+            default: true,
+        },
     },
     components: {
         addButton,
@@ -95,13 +102,16 @@ export default {
                 'c6235813-3ba4-3801-ae84-e0a6ebb7d138',
                 '1b671a64-40d5-491e-99b0-da01ff1f3341',
                 'e8b5a51d-11c8-3310-a6ab-367563f20686',
+                '12',
             ], //项目下所有序列id
         }
     },
+    inject: ['save'],
     methods: {
         //----------------------------------------footer----------------------------------------
         removeSequence(index) {
             this.sequence.next.splice(index, 1)
+            this.save()
         },
         linkToSequence(node, uuid) {
             if (node.nodeName === 'DEL') return
@@ -111,6 +121,7 @@ export default {
             }, 1500)
             if (!this.sequence.next.includes(uuid)) {
                 this.sequence.next.push(uuid)
+                this.save()
             }
         },
         search(input) {
@@ -134,8 +145,10 @@ export default {
     padding: 10px;
     margin-bottom: 20px;
     header {
-        .uuid {
+        .title {
             background: linear-gradient(90deg, #0000002e, #ffffff00);
+            cursor: pointer;
+            user-select: none;
         }
         .customized-info {
             display: flex;

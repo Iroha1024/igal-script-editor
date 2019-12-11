@@ -9,22 +9,19 @@
             @click.native="showEcharts = !showEcharts"
             contenteditable="false"
         ></echart-button>
-        <sequence
-            v-for="(item, index) of list"
-            :key="item.uuid"
-            :sequence="item"
-        ></sequence>
+        <linked-sequence :linked="linked"></linked-sequence>
+        <unlinked-sequence :unlinked="unlinked"></unlinked-sequence>
     </div>
 </template>
 
 <script>
 import fs from 'fs'
 
-import sequence from './sequence/sequence'
 import compositionMap from './echarts/compositionMap'
 import echartButton from '@/components/button/echart-button'
+import LinkedSequence from './LinkedSequence/'
+import unlinkedSequence from './unlinkedSequence/'
 
-import Type from '@/utils/shortcutKey'
 import readIgal, { extraOperate } from '@/utils/readIgal'
 import saveIgal from '@/utils/saveIgal'
 
@@ -45,22 +42,42 @@ export default {
         path: String,
     },
     components: {
-        sequence,
         compositionMap,
         echartButton,
+        LinkedSequence,
+        unlinkedSequence,
+    },
+    provide() {
+        return {
+            save: this.save,
+        }
     },
     created() {
         readIgal(this.path, this.list, this.$store.state.configPath)
         // console.log(this.$store.state.dirPath, this.$store.state.configPath);
         // console.log(this.list)
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
-        this.save()
     },
     methods: {
         save() {
-            this.$on(Type.save, () => {
-                console.log(this.list)
-                saveIgal(this.list, this.path)
+            this.updateData()
+            // saveIgal(this.list, this.path)
+        },
+        //save前更新状态
+        updateData() {
+            this.clearRank()
+            this.linked = []
+            this.unlinked = []
+            this.echarts = {
+                data: [],
+                links: [],
+            }
+            extraOperate(this.list, this.linked, this.unlinked, this.echarts)
+        },
+        //消除所有sequence层级rank
+        clearRank() {
+            this.list.forEach(sequence => {
+                this.$delete(sequence, 'rank')
             })
         },
     },

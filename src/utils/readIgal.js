@@ -33,6 +33,7 @@ export default function readIgal(path, igal, setting) {
             switch (line[0]) {
                 case Mark.start:
                     sequence = {}
+                    sequence.active = false
                     data = []
                     flag = true
                     line = line.slice(1)
@@ -105,6 +106,7 @@ export function extraOperate(igal, linked, unlinked, echarts, path) {
     if (!head) return
     setRank(igal, head)
     load(igal, linked, unlinked)
+    checkActiveProp(linked)
     setPosition(linked, unlinked)
     adaptEcharts(igal, echarts)
 }
@@ -168,11 +170,31 @@ function load(igal, linked, unlinked) {
     igal.forEach(sequence => {
         if (sequence.hasOwnProperty('rank')) {
             const index = sequence.rank
-            if (!linked[index]) linked[index] = []
+            if (!linked[index]) {
+                linked[index] = []
+                //linked首个sequence设为默认激活
+                sequence.active = true
+            }
             linked[sequence.rank].push(sequence)
         } else {
             unlinked.push(sequence)
         }
+    })
+}
+
+/**
+ * 防止新增或断开连接时，失去默认激活sequence，设置首个为默认
+ * @param {Array} linked
+ */
+function checkActiveProp(linked) {
+    linked.forEach(rank_list => {
+        rank_list.forEach((sequence, index) => {
+            if (index === 0) {
+                sequence.active = true
+            } else {
+                sequence.active = false
+            }
+        })
     })
 }
 

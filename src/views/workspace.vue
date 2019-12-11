@@ -1,7 +1,9 @@
 <template>
     <div class="workspace">
         <file-manage></file-manage>
-        <router-view :key="$route.path"></router-view>
+        <keep-alive>
+            <router-view :key="$route.path"></router-view>
+        </keep-alive>
     </div>
 </template>
 

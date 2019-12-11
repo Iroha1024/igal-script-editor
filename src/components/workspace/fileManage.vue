@@ -144,6 +144,7 @@ export default {
     height: inherit;
     background-color: $list-bg-color;
     user-select: none;
+    z-index: 100;
     .resize-drag {
         max-width: 400px;
         height: inherit;

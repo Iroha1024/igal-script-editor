@@ -49,8 +49,13 @@ export default {
             Mousetrap.prototype.stopCallback = function(e, element, combo) {
                 return false
             }
-            Mousetrap.bind(Type.save, () => {
-                this.$refs['file'].$emit(Type.save)
+            this.$nextTick(() => {
+                const fileDOM = this.$refs['file'] && this.$refs['file'].$el
+                if (fileDOM) {
+                    Mousetrap(this.$refs['file'].$el).bind(Type.save, () => {
+                        this.$refs['file'].save()
+                    })
+                }
             })
         },
     },
