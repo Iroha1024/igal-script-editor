@@ -9,12 +9,8 @@
             @click.native="showEcharts = !showEcharts"
             contenteditable="false"
         ></echart-button>
-        {{ uuid }}
-        <linked-sequence :linked="linked" :uuid="uuid"></linked-sequence>
-        <unlinked-sequence
-            :unlinked="unlinked"
-            :uuid="uuid"
-        ></unlinked-sequence>
+        <linked-sequence :linked="linked"></linked-sequence>
+        <unlinked-sequence :unlinked="unlinked"></unlinked-sequence>
     </div>
 </template>
 
@@ -26,7 +22,7 @@ import echartButton from '@/components/button/echart-button'
 import LinkedSequence from './LinkedSequence/'
 import unlinkedSequence from './unlinkedSequence/'
 
-import readIgalSync, { extraOperate, readAllSequences } from '@/utils/readIgal'
+import readIgalSync, { extraOperate } from '@/utils/readIgal'
 import saveIgal from '@/utils/saveIgal'
 
 export default {
@@ -40,7 +36,6 @@ export default {
                 links: [],
             },
             showEcharts: false,
-            uuid: [],
         }
     },
     props: {
@@ -55,23 +50,17 @@ export default {
     provide() {
         return {
             save: this.save,
+            list: this.list,
         }
     },
     created() {
         readIgalSync(this.path, this.list, this.$store.state.configPath)
-        // console.log(this.$store.state.dirPath, this.$store.state.configPath);
-        // console.log(this.list)
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
-        readAllSequences(
-            this.$store.state.dirPath,
-            this.$store.state.configPath
-        ).then(({ wrappedList, list }) => {
-            this.uuid = list.map(sequence => sequence.uuid)
-        })
     },
     methods: {
         save() {
             this.updateData()
+            console.log(this.list)
             // saveIgal(this.list, this.path)
         },
         //save前更新状态

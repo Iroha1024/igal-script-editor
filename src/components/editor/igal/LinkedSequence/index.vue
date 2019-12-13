@@ -54,7 +54,6 @@ import sequence from '../sequence/sequence'
 export default {
     props: {
         linked: Array,
-        uuid: Array,
     },
     components: {
         sequence,

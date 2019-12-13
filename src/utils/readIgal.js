@@ -71,6 +71,7 @@ function extractContent(file, json, igal) {
             case Mark.start:
                 sequence = {}
                 sequence.active = false
+                sequence.prev = []
                 data = []
                 flag = true
                 line = line.slice(1)
@@ -144,7 +145,7 @@ export async function readAllSequences(path, setting) {
     const stat = function(path, files) {
         const wrappedList = []
         const promiseList = []
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
             files.forEach(file => {
                 const promise = new Promise((resolve, reject) => {
                     fs.stat(`${path}\\${file}`, (err, stats) => {
@@ -184,10 +185,7 @@ export async function readAllSequences(path, setting) {
     let wrappedList, list
     wrappedList = await readAllIgal(path)
     list = wrappedList.flat()
-    return {
-        wrappedList,
-        list,
-    }
+    return list
 }
 
 /**
@@ -201,7 +199,7 @@ export async function readAllSequences(path, setting) {
 export function extraOperate(igal, linked, unlinked, echarts, path) {
     const head = getConfig(path, igal)
     if (!head) return
-    setRank(igal, head)
+    setProp(igal, head)
     load(igal, linked, unlinked)
     checkActiveProp(linked)
     setPosition(linked, unlinked)
@@ -239,12 +237,20 @@ function getConfig(path, igal) {
 }
 
 /**
- * 为每个序列附上层级（rank）
+ * 为每个序列附上层级（rank）和祖先序列（prev）
  * @param {*} head
  * @param {number} rank
  * @param {Array} igal
+ * @param {Array} prev
  */
-function setRank(igal, head = {}, rank = 0) {
+function setProp(igal, head = {}, rank = 0, prev = []) {
+    prev.forEach(uuid => {
+        if (!head.prev.includes(uuid)) {
+            head.prev.push(uuid)
+        }
+    })
+    const newPrev = JSON.parse(JSON.stringify(prev))
+    newPrev.push(head.uuid)
     if (!head.hasOwnProperty('rank') || head.rank < rank) {
         head.rank = rank++
     }
@@ -252,7 +258,7 @@ function setRank(igal, head = {}, rank = 0) {
     if (head.next[0]) {
         const next = head.next.map(id => getSequence(id, igal))
         next.forEach(sequence => {
-            sequence && setRank(igal, sequence, rank)
+            sequence && setProp(igal, sequence, rank, newPrev)
         })
     }
 }

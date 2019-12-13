@@ -61,6 +61,7 @@ export default {
         //获取配置信息路径
         getSettingJson(path) {
             this.$store.commit('setConfigPath', path)
+            this.$store.dispatch('updateUuids')
         },
         // 获取文件夹内信息，传入files
         getDirContents(path, parent) {

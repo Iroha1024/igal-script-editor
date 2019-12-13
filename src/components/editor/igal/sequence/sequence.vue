@@ -48,13 +48,19 @@
                     <li
                         v-for="(uuid, index) of next"
                         v-show="isShowList(uuid)"
-                        :class="{ existed: sequence.next.includes(uuid) }"
+                        :class="{
+                            existed: sequence.next.includes(uuid),
+                            outside: isOutside(uuid),
+                        }"
                         :key="index"
                         @click="linkToSequence($event.target, uuid)"
                     >
                         <template v-if="sequence.next.includes(uuid)">
                             <del>{{ uuid }}</del>
                         </template>
+                        <template v-else-if="isOutside(uuid)">{{
+                            uuid
+                        }}</template>
                         <template v-else>{{ uuid }}</template>
                     </li>
                 </ul>
@@ -70,6 +76,8 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
+
 import addButton from '@/components/button/add-button'
 import deleteButton from '@/components/button/delete-button'
 import sentence from './sentence'
@@ -96,17 +104,19 @@ export default {
             input: '',
             isShowNext: false,
             data: this.sequence.data,
-            next: [
-                '9125a8dc-52ee-365b-a5aa-81b0b3681cf6',
-                '2c5ea4c0-4067-11e9-8bad-9b1deb4d3b7d',
-                'c6235813-3ba4-3801-ae84-e0a6ebb7d138',
-                '1b671a64-40d5-491e-99b0-da01ff1f3341',
-                'e8b5a51d-11c8-3310-a6ab-367563f20686',
-                '12',
-            ], //项目下所有序列id
         }
     },
-    inject: ['save'],
+    computed: {
+        ...mapState(['uuids']),
+        next() {
+            return this.uuids.filter(
+                uuid =>
+                    !this.sequence.prev.includes(uuid) &&
+                    uuid !== this.sequence.uuid
+            )
+        },
+    },
+    inject: ['save', 'list'],
     methods: {
         //----------------------------------------footer----------------------------------------
         removeSequence(index) {
@@ -120,7 +130,11 @@ export default {
                 node.parentNode.classList.add('list-hover')
             }, 1500)
             if (!this.sequence.next.includes(uuid)) {
-                this.sequence.next.push(uuid)
+                if (this.sequence.next[0] === '') {
+                    this.sequence.next.splice(0, 1, uuid)
+                } else {
+                    this.sequence.next.push(uuid)
+                }
                 this.save()
             }
         },
@@ -133,6 +147,10 @@ export default {
         },
         toggleShowNext() {
             this.isShowNext = !this.isShowNext
+        },
+        //不属于当前igal文件中的序列
+        isOutside(uuid) {
+            return !this.list.map(sequence => sequence.uuid).includes(uuid)
         },
     },
 }
@@ -165,7 +183,7 @@ export default {
     }
     footer {
         $text-bg-color: #fff;
-        $warning-bg-color: #fc7171;
+        $forbidden-bg-color: #fc7171;
         $delete-color: #e65454;
         @mixin anime() {
             transition: all 1s ease;
@@ -226,10 +244,17 @@ export default {
                     }
                 }
                 .existed {
-                    background-color: $warning-bg-color;
+                    background-color: $forbidden-bg-color;
                     cursor: no-drop;
                     &:hover {
-                        background-color: $warning-bg-color;
+                        background-color: $forbidden-bg-color;
+                    }
+                }
+                .outside {
+                    background-color: #e4e148;
+                    cursor: wait;
+                    &:hover {
+                        background-color: #f8f691;
                     }
                 }
                 & > li + li {

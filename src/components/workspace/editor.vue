@@ -52,7 +52,7 @@ export default {
             this.$nextTick(() => {
                 const fileDOM = this.$refs['file'] && this.$refs['file'].$el
                 if (fileDOM) {
-                    Mousetrap(this.$refs['file'].$el).bind(Type.save, () => {
+                    Mousetrap(fileDOM).bind(Type.save, () => {
                         this.$refs['file'].save()
                     })
                 }
