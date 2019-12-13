@@ -15,6 +15,7 @@ import sequence from '../sequence/sequence'
 export default {
     props: {
         unlinked: Array,
+        uuid: Array,
     },
     components: {
         sequence,

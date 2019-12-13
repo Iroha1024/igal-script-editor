@@ -1,96 +1,193 @@
 import fs from 'fs'
+import Path from 'path'
+
 import Mark, { Type, getLinebreak } from './mark'
 
 /**
- * 提取igal文件内容
+ * 同步提取igal文件内容
  * @param {string} path  igal文件地址
  * @param {Array} igal  序列列表
  * @param {string} setting  setting.json地址
  */
-export default function readIgal(path, igal, setting) {
+export default function readIgalSync(path, igal, setting) {
     const file = fs.readFileSync(path, 'utf-8')
 
-    let separator = getLinebreak()
-
-    const content = file.split(separator)
-
+    //读取配置文件setting.json
     let json
     try {
         json = JSON.parse(fs.readFileSync(setting, 'utf-8'))
     } catch (error) {}
-    const customized = json.customized
 
+    extractContent(file, json, igal)
+}
+
+/**
+ * 异步提取igal文件内容
+ * @param {string} path  igal文件地址
+ * @param {string} setting  setting.json地址
+ */
+export async function readIgal(path, setting) {
+    const readFile = function() {
+        return new Promise((resolve, reject) => {
+            fs.readFile(path, 'utf-8', (err, file) => {
+                if (err) return reject()
+                resolve(file)
+            })
+        })
+    }
+    const readJson = function() {
+        return new Promise((resolve, reject) => {
+            fs.readFile(setting, 'utf-8', (err, json) => {
+                if (err) return reject()
+                json = JSON.parse(json)
+                resolve(json)
+            })
+        })
+    }
+    let igal = []
+    const file = await readFile()
+    const json = await readJson()
+    extractContent(file, json, igal)
+    return igal
+}
+
+/**
+ * 提取每行内容
+ * @param {string} file igal读取的字符串
+ * @param {object} json 配置json对象
+ * @param {Array} igal  序列列表
+ */
+function extractContent(file, json, igal) {
+    let separator = getLinebreak()
+    const content = file.split(separator)
+    const customized = json.customized
     let sequence,
         data,
         flag = false
-    /**
-     * 提取每行内容
-     */
-    function extractContent() {
-        content.forEach(line => {
-            const each_line = {}
-            let part = []
-            switch (line[0]) {
-                case Mark.start:
-                    sequence = {}
-                    sequence.active = false
-                    data = []
-                    flag = true
-                    line = line.slice(1)
-                    part = line.split(/(?<!\\)\|/)
-                    for (let index = 0; index < part.length; index++) {
-                        const keyValue = part[index].split(' ')
-                        const [key, value] = keyValue
-                        if (key === 'uuid') {
-                            sequence[key] = value
-                        } else {
-                            if (!sequence.customized) {
-                                sequence.customized = {}
-                                customized.forEach(key => {
-                                    sequence.customized[key] = ''
-                                })
-                            }
-                            if (customized.includes(key)) {
-                                sequence.customized[key] = value
-                            }
+    content.forEach(line => {
+        const each_line = {}
+        let part = []
+        switch (line[0]) {
+            case Mark.start:
+                sequence = {}
+                sequence.active = false
+                data = []
+                flag = true
+                line = line.slice(1)
+                part = line.split(/(?<!\\)\|/)
+                for (let index = 0; index < part.length; index++) {
+                    const keyValue = part[index].split(' ')
+                    const [key, value] = keyValue
+                    if (key === 'uuid') {
+                        sequence[key] = value
+                    } else {
+                        if (!sequence.customized) {
+                            sequence.customized = {}
+                            customized.forEach(key => {
+                                sequence.customized[key] = ''
+                            })
+                        }
+                        if (customized.includes(key)) {
+                            sequence.customized[key] = value
                         }
                     }
-                    break
-                case Mark.sentence:
-                    part = line.split(/(?<!\\)\>/)
-                    part.shift()
-                    each_line.name = part[0]
-                    each_line.text = part[1].split(/(?<!\\)\|/)
-                    each_line.remark = part[2].split(/(?<!\\)\|/)
-                    each_line.type = Type.sentence
+                }
+                break
+            case Mark.sentence:
+                part = line.split(/(?<!\\)\>/)
+                part.shift()
+                each_line.name = part[0]
+                each_line.text = part[1].split(/(?<!\\)\|/)
+                each_line.remark = part[2].split(/(?<!\\)\|/)
+                each_line.type = Type.sentence
+                data.push(each_line)
+                break
+            case Mark.branch:
+                part = line.split(/(?<!\\)\|/)
+                const [question, ...choices] = part
+                each_line.question = question.slice(1)
+                each_line.choices = choices
+                each_line.type = Type.branch
+                data.push(each_line)
+                break
+            case Mark.end:
+                flag = false
+                sequence.data = data
+                line = line.slice(6)
+                sequence.next = line.split(/(?<!\\)\|/)
+                igal.push(sequence)
+                break
+            default:
+                if (flag) {
+                    each_line.type = Type.linebreak
                     data.push(each_line)
-                    break
-                case Mark.branch:
-                    part = line.split(/(?<!\\)\|/)
-                    const [question, ...choices] = part
-                    each_line.question = question.slice(1)
-                    each_line.choices = choices
-                    each_line.type = Type.branch
-                    data.push(each_line)
-                    break
-                case Mark.end:
-                    flag = false
-                    sequence.data = data
-                    line = line.slice(6)
-                    sequence.next = line.split(/(?<!\\)\|/)
-                    igal.push(sequence)
-                    break
-                default:
-                    if (flag) {
-                        each_line.type = Type.linebreak
-                        data.push(each_line)
-                    }
-                    break
-            }
+                }
+                break
+        }
+    })
+}
+
+/**
+ * 读取项目下所有序列
+ * @param {string} path 项目文件夹路径
+ * @param {string} setting setting.json路径
+ */
+export async function readAllSequences(path, setting) {
+    const readDir = function(path) {
+        return new Promise((resolve, reject) => {
+            fs.readdir(path, (err, files) => {
+                if (err) return reject()
+                resolve(files)
+            })
         })
     }
+    const stat = function(path, files) {
+        const wrappedList = []
+        const promiseList = []
+        return new Promise((resolve, reject) => {
+            files.forEach(file => {
+                const promise = new Promise((resolve, reject) => {
+                    fs.stat(`${path}\\${file}`, (err, stats) => {
+                        if (err) return reject()
+                        if (stats.isDirectory()) {
+                            readAllIgal(`${path}\\${file}`).then(
+                                deepWrappedList => {
+                                    deepWrappedList.forEach(igal => {
+                                        wrappedList.push(igal)
+                                    })
+                                    resolve()
+                                }
+                            )
+                        } else if (Path.extname(file) === '.igal') {
+                            readIgal(`${path}\\${file}`, setting).then(igal => {
+                                wrappedList.push(igal)
+                                resolve()
+                            })
+                        } else {
+                            resolve()
+                        }
+                    })
+                })
+                promiseList.push(promise)
+            })
+            Promise.all(promiseList).then(() => {
+                resolve(wrappedList)
+            })
+        })
+    }
+    async function readAllIgal(path) {
+        const files = await readDir(path)
+        const data = await stat(path, files)
+        return data
+    }
 
-    extractContent()
+    let wrappedList, list
+    wrappedList = await readAllIgal(path)
+    list = wrappedList.flat()
+    return {
+        wrappedList,
+        list,
+    }
 }
 
 /**
