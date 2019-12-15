@@ -63,13 +63,21 @@ export default {
                 if (fs.statSync(`${path}\\${file}`).isDirectory()) {
                     const newParent = []
                     parent.push(newParent)
-                    newParent.push({ path: `${path}\\${file}`, type: 'dir' })
+                    newParent.push({
+                        path: `${path}\\${file}`,
+                        type: 'dir',
+                        isShowInput: false,
+                    })
                     this.getDirContents(`${path}\\${file}`, newParent)
                 } else {
                     if (file === 'setting.json') {
                         this.setConfigPath(`${path}\\${file}`)
                     }
-                    parent.push({ path: `${path}\\${file}`, type: 'file' })
+                    parent.push({
+                        path: `${path}\\${file}`,
+                        type: 'file',
+                        isShowInput: false,
+                    })
                 }
             })
         },

@@ -21,6 +21,16 @@ export default function readIgalSync(path, igal, setting) {
     extractContent(file, json, igal)
 }
 
+export function readJson(setting) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(setting, 'utf-8', (err, json) => {
+            if (err) return reject()
+            json = JSON.parse(json)
+            resolve(json)
+        })
+    })
+}
+
 /**
  * 异步提取igal文件内容
  * @param {string} path  igal文件地址
@@ -35,18 +45,9 @@ export async function readIgal(path, setting) {
             })
         })
     }
-    const readJson = function() {
-        return new Promise((resolve, reject) => {
-            fs.readFile(setting, 'utf-8', (err, json) => {
-                if (err) return reject()
-                json = JSON.parse(json)
-                resolve(json)
-            })
-        })
-    }
     let igal = []
     const file = await readFile()
-    const json = await readJson()
+    const json = await readJson(setting)
     extractContent(file, json, igal)
     return igal
 }

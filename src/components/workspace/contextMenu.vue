@@ -17,6 +17,8 @@
 import { ipcRenderer } from 'electron'
 import { mapState } from 'vuex'
 
+import eventBus from '@/eventBus'
+
 export default {
     data() {
         return {
@@ -81,8 +83,8 @@ export default {
         findDirOfArr(arr) {
             for (const file of arr) {
                 if (file.path === this.path) return arr
-                if (file.type === 'dir') {
-                    findDirOfArr(file)
+                if (Array.isArray(file)) {
+                    return this.findDirOfArr(file)
                 }
             }
         },
@@ -90,11 +92,13 @@ export default {
         createFile() {
             this.$refs.createFile.addEventListener('click', () => {
                 const arr = this.findDirOfArr(this.files)
-                // let file = {
-                //     path: '"D:\\GitHub\\igal-script-editor\\test\\test.igal',
-                //     type: 'file',
-                // }
-                // arr.push(file)
+                let file = {
+                    name: '',
+                    path: this.path,
+                    type: 'file',
+                    isShowInput: true,
+                }
+                arr.push(file)
                 this.$store.commit('setFiles', this.files)
             })
         },
