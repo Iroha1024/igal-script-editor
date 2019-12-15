@@ -1,11 +1,11 @@
 <template>
     <div class="unlinked-sequence">
-        <sequence
-            v-for="(sequence, index) of unlinked"
-            class="unlinked"
-            :key="index"
-            :sequence="sequence"
-        ></sequence>
+        <div v-for="(sequence, index) of unlinked" :key="index">
+            <div class="title">
+                {{ computedTitle(sequence) }}
+            </div>
+            <sequence class="unlinked" :sequence="sequence"></sequence>
+        </div>
     </div>
 </template>
 
@@ -15,6 +15,7 @@ import sequence from '../sequence/sequence'
 export default {
     props: {
         unlinked: Array,
+        computedTitle: Function,
     },
     components: {
         sequence,
@@ -23,7 +24,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/deep/ .unlinked .title {
-    background: #fc7171 !important;
+.title {
+    border-radius: 10px 10px 0 0;
+    padding: 0 $sequence-padding;
+    background-color: #fc7171;
 }
 </style>

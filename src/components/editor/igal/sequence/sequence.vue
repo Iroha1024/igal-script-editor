@@ -1,9 +1,6 @@
 <template>
     <div class="sequence">
         <header>
-            <div class="title" contenteditable="false" v-show="showTitle">
-                {{ sequence.customized.title }} --> {{ sequence.uuid }}
-            </div>
             <div
                 class="customized-info"
                 v-for="([key, value], index) of Object.entries(
@@ -17,7 +14,7 @@
         <main>
             <component
                 :is="item.type"
-                v-for="(item, index) of data"
+                v-for="(item, index) of sequence.data"
                 :key="index"
                 :info="item"
             ></component>
@@ -25,12 +22,12 @@
         <footer contenteditable="false">
             <div
                 class="next"
-                :class="{ 'bg-color': isShowNext }"
+                :class="{ 'bg-color': isShowUuidOfNext }"
                 v-if="uuid !== ''"
                 v-for="(uuid, index) of sequence.next"
                 :key="index"
             >
-                <div class="text" :class="{ 'show-text': isShowNext }">
+                <div class="text" :class="{ 'show-text': isShowUuidOfNext }">
                     {{ uuid }}
                 </div>
                 <delete-button
@@ -49,13 +46,13 @@
                         v-for="(uuid, index) of next"
                         v-show="isShowList(uuid)"
                         :class="{
-                            existed: sequence.next.includes(uuid),
+                            existed: isExisted(uuid),
                             outside: isOutside(uuid),
                         }"
                         :key="index"
                         @click="linkToSequence($event.target, uuid)"
                     >
-                        <template v-if="sequence.next.includes(uuid)">
+                        <template v-if="isExisted(uuid)">
                             <del>{{ uuid }}</del>
                         </template>
                         <template v-else-if="isOutside(uuid)">{{
@@ -68,7 +65,9 @@
             </div>
             <div
                 class="show-next iconfont"
-                :class="[isShowNext ? 'icon-xianshi' : 'icon-icon-eye-close']"
+                :class="[
+                    isShowUuidOfNext ? 'icon-xianshi' : 'icon-icon-eye-close',
+                ]"
                 @click="toggleShowNext()"
             ></div>
         </footer>
@@ -84,13 +83,11 @@ import sentence from './sentence'
 import linebreak from './linebreak'
 import branch from './branch'
 
+import { isNextEmpty } from '@/utils/readIgal'
+
 export default {
     props: {
         sequence: Object,
-        showTitle: {
-            type: Boolean,
-            default: true,
-        },
     },
     components: {
         addButton,
@@ -101,9 +98,10 @@ export default {
     },
     data() {
         return {
+            //搜索uuid
             input: '',
-            isShowNext: false,
-            data: this.sequence.data,
+            //是否展示next内uuid
+            isShowUuidOfNext: false,
         }
     },
     computed: {
@@ -119,10 +117,12 @@ export default {
     inject: ['save', 'list'],
     methods: {
         //----------------------------------------footer----------------------------------------
+        //删除序列后，保存
         removeSequence(index) {
             this.sequence.next.splice(index, 1)
             this.save()
         },
+        //新增序列后，保存
         linkToSequence(node, uuid) {
             if (node.nodeName === 'DEL') return
             node.parentNode.classList.remove('list-hover')
@@ -130,7 +130,7 @@ export default {
                 node.parentNode.classList.add('list-hover')
             }, 1500)
             if (!this.sequence.next.includes(uuid)) {
-                if (this.sequence.next[0] === '') {
+                if (isNextEmpty(this.sequence.next)) {
                     this.sequence.next.splice(0, 1, uuid)
                 } else {
                     this.sequence.next.push(uuid)
@@ -141,12 +141,17 @@ export default {
         search(input) {
             this.input = input.value
         },
+        //展示查询内容
         isShowList(uuid) {
             if (this.input === '') return true
             return uuid.startsWith(this.input)
         },
         toggleShowNext() {
-            this.isShowNext = !this.isShowNext
+            this.isShowUuidOfNext = !this.isShowUuidOfNext
+        },
+        //已经连接序列
+        isExisted(uuid) {
+            return this.sequence.next.includes(uuid)
         },
         //不属于当前igal文件中的序列
         isOutside(uuid) {
@@ -159,15 +164,10 @@ export default {
 <style lang="scss" scoped>
 .sequence {
     background-color: #ebebeb91;
-    border-radius: 10px;
-    padding: 10px;
+    border-radius: 0 0 10px 10px;
+    padding: $sequence-padding;
     margin-bottom: 20px;
     header {
-        .title {
-            background: linear-gradient(90deg, #0000002e, #ffffff00);
-            cursor: pointer;
-            user-select: none;
-        }
         .customized-info {
             display: flex;
             align-items: center;

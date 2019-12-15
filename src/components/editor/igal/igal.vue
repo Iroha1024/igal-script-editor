@@ -9,8 +9,14 @@
             @click.native="showEcharts = !showEcharts"
             contenteditable="false"
         ></echart-button>
-        <linked-sequence :linked="linked"></linked-sequence>
-        <unlinked-sequence :unlinked="unlinked"></unlinked-sequence>
+        <linked-sequence
+            :linked="linked"
+            :computedTitle="computedTitle"
+        ></linked-sequence>
+        <unlinked-sequence
+            :unlinked="unlinked"
+            :computedTitle="computedTitle"
+        ></unlinked-sequence>
     </div>
 </template>
 
@@ -79,6 +85,14 @@ export default {
             this.list.forEach(sequence => {
                 this.$delete(sequence, 'rank')
             })
+        },
+        computedTitle(sequence) {
+            const title = sequence.customized.title
+            const uuid = sequence.uuid
+            if (title) {
+                return `${title} --> ${uuid}`
+            }
+            return uuid
         },
     },
 }

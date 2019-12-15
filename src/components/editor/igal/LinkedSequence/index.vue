@@ -16,20 +16,10 @@
                         }"
                         v-for="(sequence, index) of rankList"
                         :key="index"
-                        :title="
-                            computedTitle(
-                                sequence.customized.title,
-                                sequence.uuid
-                            )
-                        "
+                        :title="computedTitle(sequence)"
                         @click="toggleActive(rankList, sequence)"
                     >
-                        {{
-                            computedTitle(
-                                sequence.customized.title,
-                                sequence.uuid
-                            )
-                        }}
+                        {{ computedTitle(sequence) }}
                     </div>
                 </div>
                 <div
@@ -54,17 +44,13 @@ import sequence from '../sequence/sequence'
 export default {
     props: {
         linked: Array,
+        computedTitle: Function,
     },
     components: {
         sequence,
     },
     methods: {
-        computedTitle(title, uuid) {
-            if (title) {
-                return `${title} --> ${uuid}`
-            }
-            return uuid
-        },
+        //当前序列是否与前个激活序列相连
         isRelated(linked, rank, sequence) {
             if (rank === 0) return false
             const prevActiveSequence = linked[rank - 1].filter(
@@ -76,7 +62,7 @@ export default {
             if (rank === 0) return false
             return !this.isRelated(linked, rank, sequence)
         },
-        //点击切换
+        //点击切换序列
         toggleActive(rankList, sequence) {
             rankList.forEach(sequence => {
                 sequence.active = false
@@ -91,11 +77,12 @@ export default {
 .tabs {
     .tab__nav {
         display: flex;
-        padding: 0 10px;
         font-size: 20px;
         user-select: none;
         .tab {
-            width: 100px;
+            flex: 1;
+            padding: 0 $sequence-padding;
+            border-radius: 10px 10px 0 0;
             cursor: pointer;
             overflow: hidden;
             white-space: nowrap;

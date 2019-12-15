@@ -51,6 +51,35 @@ export async function readIgal(path, setting) {
     return igal
 }
 
+function firstElement(content) {
+    return content[0]
+}
+
+/**
+ * next是否为空
+ * e.g. next: ['']，isNextEmpty(next) === true
+ * @param {Array} arr
+ */
+export function isNextEmpty(arr) {
+    return firstElement(arr) === ''
+}
+
+/**
+ * 分隔字符串
+ * e.g. |分隔  \|不分隔
+ * @param {string} content
+ * @param {string} separator
+ * @returns {Array}
+ */
+function splitBy(content, separator) {
+    switch (separator) {
+        case '|':
+            return content.split(/(?<!\\)\|/)
+        case '>':
+            return content.split(/(?<!\\)\>/)
+    }
+}
+
 /**
  * 提取每行内容
  * @param {string} file igal读取的字符串
@@ -67,7 +96,7 @@ function extractContent(file, json, igal) {
     content.forEach(line => {
         const each_line = {}
         let part = []
-        switch (line[0]) {
+        switch (firstElement(line)) {
             case Mark.start:
                 sequence = {}
                 sequence.active = false
@@ -75,7 +104,7 @@ function extractContent(file, json, igal) {
                 data = []
                 flag = true
                 line = line.slice(1)
-                part = line.split(/(?<!\\)\|/)
+                part = splitBy(line, '|')
                 for (let index = 0; index < part.length; index++) {
                     const keyValue = part[index].split(' ')
                     const [key, value] = keyValue
@@ -95,16 +124,17 @@ function extractContent(file, json, igal) {
                 }
                 break
             case Mark.sentence:
-                part = line.split(/(?<!\\)\>/)
+                part = splitBy(line, '>')
                 part.shift()
-                each_line.name = part[0]
-                each_line.text = part[1].split(/(?<!\\)\|/)
-                each_line.remark = part[2].split(/(?<!\\)\|/)
+                const [name, text, remark] = part
+                each_line.name = name
+                each_line.text = splitBy(text, '|')
+                each_line.remark = splitBy(remark, '|')
                 each_line.type = Type.sentence
                 data.push(each_line)
                 break
             case Mark.branch:
-                part = line.split(/(?<!\\)\|/)
+                part = splitBy(line, '|')
                 const [question, ...choices] = part
                 each_line.question = question.slice(1)
                 each_line.choices = choices
@@ -114,8 +144,8 @@ function extractContent(file, json, igal) {
             case Mark.end:
                 flag = false
                 sequence.data = data
-                line = line.slice(6)
-                sequence.next = line.split(/(?<!\\)\|/)
+                line = line.split(' ')[1]
+                sequence.next = splitBy(line, '|')
                 igal.push(sequence)
                 break
             default:
@@ -232,7 +262,7 @@ function getConfig(path, igal) {
         } catch (error) {}
         return json && getSequence(json.head, igal)
     } else {
-        return igal[0]
+        return firstElement(igal)
     }
 }
 
@@ -254,8 +284,7 @@ function setProp(igal, head = {}, rank = 0, prev = []) {
     if (!head.hasOwnProperty('rank') || head.rank < rank) {
         head.rank = rank++
     }
-    //next首个元素不为''时
-    if (head.next[0]) {
+    if (!isNextEmpty(head.next)) {
         const next = head.next.map(id => getSequence(id, igal))
         next.forEach(sequence => {
             sequence && setProp(igal, sequence, rank, newPrev)
