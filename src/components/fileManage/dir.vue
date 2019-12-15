@@ -1,7 +1,9 @@
 <script>
+import { mapState } from 'vuex'
+
 export default {
-    props: {
-        files: Array,
+    computed: {
+        ...mapState(['files']),
     },
     render(h) {
         const dirWrapper = arr => {
@@ -19,6 +21,10 @@ export default {
             return h('div', {
                 class: {
                     dir: true,
+                },
+                attrs: {
+                    id: 'dir',
+                    path: info.path,
                 },
                 style: {
                     textIndent: indent + 'px',

@@ -1,10 +1,7 @@
 <template>
     <div class="file-manage">
-        <div class="resize-drag" ref="fileArea">
+        <div class="resize-drag" id="resizeDrag">
             <dir :files="files"></dir>
-            <div class="context-menu" v-show="showMenu" ref="contextMenu">
-                <div class="menu-item" ref="openDir">打开文件夹</div>
-            </div>
         </div>
     </div>
 </template>
@@ -12,17 +9,14 @@
 <script>
 import fs from 'fs'
 
-import interact from 'interactjs'
-
-import { openDirectory } from '@/electron/renderer'
 import { ipcRenderer } from 'electron'
+import interact from 'interactjs'
 
 import dir from '../fileManage/dir'
 
 export default {
     data() {
         return {
-            showMenu: false,
             files: [],
         }
     },
@@ -30,38 +24,38 @@ export default {
         dir,
     },
     mounted() {
-        this.bindEvent()
         this.getDirName()
-        this.openMenu()
         this.resize()
     },
     methods: {
-        //菜单栏事件绑定
-        bindEvent() {
-            openDirectory(this.$refs.openDir)
-        },
         //获取文件夹信息
         getDirName() {
             ipcRenderer.on('select-dir', (event, path) => {
+                //没选择文件夹，则取消
                 if (path.length < 1) return
                 this.files = []
                 let dirPath = path[0]
-                this.getDirPath(dirPath)
+                this.setDirPath(dirPath)
                 if (dirPath) {
                     this.files.push({ path: dirPath, type: 'dir' })
                     this.getDirContents(dirPath, this.files)
+                    this.setFiles(this.files)
                     // console.log(this.files);
                 }
             })
         },
         //获取项目文件路径
-        getDirPath(path) {
+        setDirPath(path) {
             this.$store.commit('setDirPath', path)
         },
-        //获取配置信息路径
-        getSettingJson(path) {
+        //获取配置信息路径，更新uuids
+        setConfigPath(path) {
             this.$store.commit('setConfigPath', path)
             this.$store.dispatch('updateUuids')
+        },
+        //获取所有文件及文件夹
+        setFiles(files) {
+            this.$store.commit('setFiles', files)
         },
         // 获取文件夹内信息，传入files
         getDirContents(path, parent) {
@@ -73,24 +67,10 @@ export default {
                     this.getDirContents(`${path}\\${file}`, newParent)
                 } else {
                     if (file === 'setting.json') {
-                        this.getSettingJson(`${path}\\${file}`)
+                        this.setConfigPath(`${path}\\${file}`)
                     }
                     parent.push({ path: `${path}\\${file}`, type: 'file' })
                 }
-            })
-        },
-        //右键菜单栏
-        openMenu() {
-            const fileArea = this.$refs.fileArea
-            const contextMenu = this.$refs.contextMenu
-            fileArea.addEventListener('contextmenu', event => {
-                if (event.target !== event.currentTarget) return
-                this.showMenu = true
-                contextMenu.style.top = event.clientY + 'px'
-                contextMenu.style.left = event.clientX + 'px'
-            })
-            window.addEventListener('click', () => {
-                this.showMenu = false
             })
         },
         //调整文件区大小
@@ -155,24 +135,6 @@ export default {
         height: inherit;
         touch-action: none;
         overflow: hidden scroll;
-        .context-menu {
-            width: 150px;
-            position: absolute;
-            font-size: 18px;
-            background-color: #fff;
-            border-radius: 5px;
-            width: fit-content;
-            .menu-item {
-                padding: 10px 20px;
-                &:hover {
-                    cursor: pointer;
-                    background-color: $nomral-button-color;
-                }
-            }
-            .menu-item + .menu-item {
-                border-top: 1px solid #ccc;
-            }
-        }
     }
 }
 </style>

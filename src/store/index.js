@@ -7,8 +7,13 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
     state: {
+        //项目文件夹路径
         dirPath: '',
+        //项目配置文件路径
         configPath: '',
+        //项目下所有文件及文件夹
+        files: [],
+        //项目下所有序列uuid
         uuids: [],
     },
     mutations: {
@@ -17,6 +22,9 @@ const store = new Vuex.Store({
         },
         setConfigPath(state, path) {
             state.configPath = path
+        },
+        setFiles(state, files) {
+            state.files = files
         },
     },
     actions: {
