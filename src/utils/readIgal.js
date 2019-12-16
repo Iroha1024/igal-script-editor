@@ -146,7 +146,12 @@ function extractContent(file, json, igal) {
                 flag = false
                 sequence.data = data
                 line = line.split(' ')[1]
-                sequence.next = splitBy(line, '|')
+                const next = splitBy(line, '|')
+                if (isNextEmpty(next)) {
+                    sequence.next = []
+                } else {
+                    sequence.next = next
+                }
                 igal.push(sequence)
                 break
             default:
@@ -285,12 +290,10 @@ function setProp(igal, head = {}, rank = 0, prev = []) {
     if (!head.hasOwnProperty('rank') || head.rank < rank) {
         head.rank = rank++
     }
-    if (!isNextEmpty(head.next)) {
-        const next = head.next.map(id => getSequence(id, igal))
-        next.forEach(sequence => {
-            sequence && setProp(igal, sequence, rank, newPrev)
-        })
-    }
+    const next = head.next.map(id => getSequence(id, igal))
+    next.forEach(sequence => {
+        sequence && setProp(igal, sequence, rank, newPrev)
+    })
 }
 
 /**

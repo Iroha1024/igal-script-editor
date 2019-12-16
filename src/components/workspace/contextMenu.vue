@@ -7,8 +7,17 @@
             v-show="isShow(show.createFile)"
             class="menu-item"
             ref="createFile"
+            id="createFile"
         >
             新建文件
+        </div>
+        <div
+            v-show="isShow(show.rename)"
+            class="menu-item"
+            ref="rename"
+            id="rename"
+        >
+            重命名
         </div>
     </div>
 </template>
@@ -17,8 +26,6 @@
 import { ipcRenderer } from 'electron'
 import { mapState } from 'vuex'
 
-import eventBus from '@/eventBus'
-
 export default {
     data() {
         return {
@@ -26,9 +33,11 @@ export default {
             currentWindow: null,
             //文件路径
             path: '',
+            //功能只在相应id区域出现
             show: {
                 openDir: ['resizeDrag'],
                 createFile: ['dir'],
+                rename: ['file'],
             },
         }
     },
@@ -43,7 +52,7 @@ export default {
         isShow(arr) {
             return arr.includes(this.currentWindow)
         },
-        //右键菜单栏
+        //右键菜单栏，获取指定区域id和path
         openMenu() {
             const contextMenu = this.$refs.contextMenu
             const viewPortWidth = document.documentElement.clientWidth
@@ -72,6 +81,7 @@ export default {
         bindEvent() {
             this.openDirectory()
             this.createFile()
+            this.rename()
         },
         //打开文件夹
         openDirectory() {
@@ -88,18 +98,37 @@ export default {
                 }
             }
         },
+        findFileByPath(arr) {
+            let file
+            for (const item of arr) {
+                if (item.path === this.path) file = item
+                if (Array.isArray(item)) {
+                    file = this.findFileByPath(item)
+                }
+            }
+            return file
+        },
         //新建文件
         createFile() {
             this.$refs.createFile.addEventListener('click', () => {
                 const arr = this.findDirOfArr(this.files)
-                let file = {
+                const file = {
                     name: '',
                     path: this.path,
                     type: 'file',
-                    isShowInput: true,
+                    isEdit: true,
+                    isNewBuilt: true,
                 }
                 arr.push(file)
-                this.$store.commit('setFiles', this.files)
+                this.$store.commit('setFile', file)
+            })
+        },
+        //重命名
+        rename() {
+            this.$refs.rename.addEventListener('click', () => {
+                const file = this.findFileByPath(this.files)
+                file.isEdit = true
+                this.$store.commit('setFile', file)
             })
         },
     },

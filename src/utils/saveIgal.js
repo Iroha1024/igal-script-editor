@@ -35,5 +35,10 @@ export default function saveIgal(igal, path) {
     })
     data = data.join(getLinebreak())
     // console.log(data);
-    fs.writeFile(path, data, () => {})
+    return new Promise((resolve, reject) => {
+        fs.writeFile(path, data, err => {
+            if (err) return reject()
+            resolve()
+        })
+    })
 }

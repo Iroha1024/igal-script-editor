@@ -23,7 +23,6 @@
             <div
                 class="next"
                 :class="{ 'bg-color': isShowUuidOfNext }"
-                v-if="uuid !== ''"
                 v-for="(uuid, index) of sequence.next"
                 :key="index"
             >
@@ -83,8 +82,6 @@ import sentence from './sentence'
 import linebreak from './linebreak'
 import branch from './branch'
 
-import { isNextEmpty } from '@/utils/readIgal'
-
 export default {
     props: {
         sequence: Object,
@@ -130,11 +127,7 @@ export default {
                 node.parentNode.classList.add('list-hover')
             }, 1500)
             if (!this.sequence.next.includes(uuid)) {
-                if (isNextEmpty(this.sequence.next)) {
-                    this.sequence.next.splice(0, 1, uuid)
-                } else {
-                    this.sequence.next.push(uuid)
-                }
+                this.sequence.next.push(uuid)
                 this.save()
             }
         },

@@ -1,5 +1,3 @@
-import fs from 'fs'
-
 import uuidv1 from 'uuid/v1'
 
 import { readJson } from '@/utils/readIgal'
@@ -31,5 +29,5 @@ export default async function writeIgal(setting, path) {
         },
     ]
     // console.log(igal);
-    saveIgal(igal, path)
+    await saveIgal(igal, path)
 }

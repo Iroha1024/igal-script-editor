@@ -66,7 +66,8 @@ export default {
                     newParent.push({
                         path: `${path}\\${file}`,
                         type: 'dir',
-                        isShowInput: false,
+                        isEdit: false,
+                        isNewBuilt: false,
                     })
                     this.getDirContents(`${path}\\${file}`, newParent)
                 } else {
@@ -76,7 +77,8 @@ export default {
                     parent.push({
                         path: `${path}\\${file}`,
                         type: 'file',
-                        isShowInput: false,
+                        isEdit: false,
+                        isNewBuilt: false,
                     })
                 }
             })
