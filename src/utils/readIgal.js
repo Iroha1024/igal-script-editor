@@ -164,20 +164,21 @@ function extractContent(file, json, igal) {
     })
 }
 
+export function readDir(path) {
+    return new Promise((resolve, reject) => {
+        fs.readdir(path, (err, files) => {
+            if (err) return reject()
+            resolve(files)
+        })
+    })
+}
+
 /**
  * 读取项目下所有序列
  * @param {string} path 项目文件夹路径
  * @param {string} setting setting.json路径
  */
 export async function readAllSequences(path, setting) {
-    const readDir = function(path) {
-        return new Promise((resolve, reject) => {
-            fs.readdir(path, (err, files) => {
-                if (err) return reject()
-                resolve(files)
-            })
-        })
-    }
     const stat = function(path, files) {
         const wrappedList = []
         const promiseList = []

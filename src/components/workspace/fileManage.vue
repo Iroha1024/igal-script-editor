@@ -11,6 +11,7 @@ import fs from 'fs'
 
 import { ipcRenderer } from 'electron'
 import interact from 'interactjs'
+import { mapState } from 'vuex'
 
 import dir from '../fileManage/dir'
 
@@ -19,6 +20,9 @@ export default {
         return {
             files: [],
         }
+    },
+    computed: {
+        ...mapState(['dirPath']),
     },
     components: {
         dir,
@@ -71,7 +75,9 @@ export default {
                     })
                     this.getDirContents(`${path}\\${file}`, newParent)
                 } else {
-                    if (file === 'setting.json') {
+                    if (
+                        `${path}\\${file}` === `${this.dirPath}\\setting.json`
+                    ) {
                         this.setConfigPath(`${path}\\${file}`)
                     }
                     parent.push({
