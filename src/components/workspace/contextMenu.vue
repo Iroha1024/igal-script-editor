@@ -91,22 +91,25 @@ export default {
         },
         //递归遍历files，找到所选文件夹所在数组
         findDirOfArr(arr) {
+            let list
             for (const file of arr) {
                 if (file.path === this.path) return arr
                 if (Array.isArray(file)) {
-                    return this.findDirOfArr(file)
+                    list = this.findDirOfArr(file)
+                    if (list) return list
                 }
             }
         },
+        //递归遍历files，找到对应path文件
         findFileByPath(arr) {
             let file
             for (const item of arr) {
-                if (item.path === this.path) file = item
+                if (item.path === this.path) return item
                 if (Array.isArray(item)) {
                     file = this.findFileByPath(item)
+                    if (file) return file
                 }
             }
-            return file
         },
         //新建文件
         createFile() {
