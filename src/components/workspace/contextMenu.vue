@@ -255,16 +255,14 @@ export default {
         createDir() {
             this.$refs.createDir.addEventListener('click', () => {
                 const arr = this.findArrOfDir(this.files)
-                const dir = [
-                    {
+                const dir = {
                         name: '',
                         path: this.path,
                         type: 'dir',
                         isEdit: true,
                         isNewBuilt: true,
-                    },
-                ]
-                arr.push(dir)
+                }
+                arr.push([dir])
                 this.$store.commit('setDir', dir)
             })
         },

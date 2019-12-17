@@ -38,15 +38,34 @@ const store = new Vuex.Store({
         },
         //删除未完成文件
         deleteIncompletefile(state, file) {
-            function removeFile(files) {
-                if (files.includes(file)) {
-                    files.splice(files.indexOf(file), 1)
+            let remove
+            if (file.type === 'dir') {
+                remove = files => {
+                    let list
+                    function findArrOfDir(files) {
+                        if (files.includes(file)) return files
+                        for (const item of files) {
+                            if (Array.isArray(item)) {
+                                list = findArrOfDir(item)
+                                if (list) {
+                                    files.splice(files.indexOf(list), 1)
+                                }
+                            }
+                        }
+                    }
+                    findArrOfDir(files)
                 }
-                for (const arr of files) {
-                    if (Array.isArray(arr)) removeFile(arr)
+            } else {
+                remove = files => {
+                    if (files.includes(file)) {
+                        files.splice(files.indexOf(file), 1)
+                    }
+                    for (const arr of files) {
+                        if (Array.isArray(arr)) remove(arr)
+                    }
                 }
             }
-            removeFile(state.files)
+            remove(state.files)
         },
     },
     actions: {
