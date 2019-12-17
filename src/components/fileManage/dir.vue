@@ -12,89 +12,138 @@ export default {
         }
     },
     computed: {
-        ...mapState(['configPath', 'files', 'file']),
+        ...mapState(['configPath', 'files', 'file', 'dir']),
     },
     mounted() {
         this.clickControl()
     },
     methods: {
+        /**
+         * 检查是否重名
+         * @param {string} upperPath 上级路径
+         * @param {string} newPath 新路径
+         * @returns {boolean}
+         */
         checkHasSameName(upperPath, newPath) {
             return fs
                 .readdirSync(upperPath)
                 .some(file => newPath === `${upperPath}\\${file}`)
         },
         /**
-         * 根据输入值`value`新增文件和重命名文件
+         * 获取当前路径的上一级路径
+         * @param {string} path 文件路径
+         * @returns {string}
+         */
+        getupperPath(path) {
+            return path
+                .split('\\')
+                .slice(0, -1)
+                .join('\\')
+        },
+        /**
+         * 若新增文件不为json，且不为igal，则自动加上.igal后缀
+         * @param {string} path 文件路径
+         * @param {boolean} isAddSuffix 是否添加后缀
+         */
+        addSuffix(path, isAddSuffix) {
+            if (
+                isAddSuffix &&
+                !path.endsWith('.json') &&
+                !path.endsWith('.igal')
+            ) {
+                return `${path}.igal`
+            }
+            return path
+        },
+        /**
+         * 根据输入值`value`新增文件（夹）和重命名文件（夹）
          *
          * 不输入值直接返回，退出编辑状态`isEdit=false`
          *
-         * 1、新建文件：重名直接返回
+         * 1、新建：重名直接返回
          *
          * 2、重命名：重名或与自身相同直接返回
          *
+         * @param {*} info 文件（夹）信息
+         * @param {boolean} isAddSuffix 是否添加后缀
+         * @param {Fuction} callback 后续执行函数
          */
-        operateFile(file) {
-            if (!file) return
-            file.isEdit = false
+        operate(info, isAddSuffix, callback) {
+            if (!info) return
+            info.isEdit = false
             if (this.value) {
-                //新建文件
-                if (file.isNewBuilt) {
-                    const upperPath = file.path
-                    file.path += `\\${this.value}`
+                //新建
+                if (info.isNewBuilt) {
+                    const upperPath = info.path
+                    info.path += `\\${this.value}`
                     this.value = ''
-                    if (!file.path.endsWith('.igal')) {
-                        file.path += '.igal'
-                    }
-                    if (this.checkHasSameName(upperPath, file.path)) {
-                        this.$store.commit('deleteIncompletefile', file)
+                    info.path = this.addSuffix(info.path, isAddSuffix)
+                    if (this.checkHasSameName(upperPath, info.path)) {
+                        this.$store.commit('deleteIncompletefile', info)
                         return
                     }
-                    file.name = file.path.split('\\').pop()
-                    writeIgal(this.configPath, file.path).then(() => {
-                        file.isNewBuilt = false
-                        this.$router.push({
-                            path: `/file/${file.path}`,
-                        })
-                    })
+                    info.name = info.path.split('\\').pop()
+                    callback()
                 } else {
-                    //重命名文件，先将path改为上级路径
-                    const upperPath = file.path
-                        .split('\\')
-                        .slice(0, -1)
-                        .join('\\')
+                    //重命名，先将path改为上级路径
+                    const upperPath = this.getupperPath(info.path)
                     let newPath = `${upperPath}\\${this.value}`
                     this.value = ''
-                    if (!newPath.endsWith('.igal')) {
-                        newPath += '.igal'
-                    }
+                    newPath = this.addSuffix(newPath, isAddSuffix)
                     if (
-                        file.oldPath === newPath ||
+                        info.oldPath === newPath ||
                         this.checkHasSameName(upperPath, newPath)
                     ) {
                         console.log('rename same')
                         return
                     }
-                    file.path = newPath
-                    fs.renameSync(file.oldPath, file.path)
-                    file.oldPath = file.path
+                    info.path = newPath
+                    fs.renameSync(info.oldPath, info.path)
+                    info.oldPath = info.path
                 }
-            } else if (file.isNewBuilt) {
-                this.$store.commit('deleteIncompletefile', file)
+            } else if (info.isNewBuilt) {
+                this.$store.commit('deleteIncompletefile', info)
             }
+        },
+        operateFile(file) {
+            this.operate(file, true, () => {
+                writeIgal(this.configPath, file.path).then(() => {
+                    file.isNewBuilt = false
+                    this.$router.push({
+                        path: `/file/${file.path}`,
+                    })
+                })
+            })
+        },
+        operateDir(dir) {
+            this.operate(dir, false, () => {
+                fs.mkdir(dir.path, () => {
+                    dir.isNewBuilt = false
+                })
+            })
         },
         //点击控制文件编辑状态
         clickControl() {
             const click = event => {
                 //不会自动消除的区域id
-                const noEffectId = ['input', 'createFile', 'rename']
+                const noEffectId = [
+                    'input',
+                    'createFile',
+                    'rename',
+                    'createDir',
+                ]
                 if (!noEffectId.includes(event.target.id)) {
                     this.operateFile(this.file)
                     this.$store.commit('setFile', null)
+                    this.operateFile(this.dir)
+                    this.$store.commit('setDir', null)
                 }
             }
             const rightClick = () => {
                 this.operateFile(this.file)
                 this.$store.commit('setFile', null)
+                this.operateFile(this.dir)
+                this.$store.commit('setDir', null)
             }
             //左键单击其他区域
             window.addEventListener('click', click)
@@ -114,24 +163,7 @@ export default {
                 arr
             )
         }
-        const dir = (info, indent) => {
-            return h('div', {
-                class: {
-                    dir: true,
-                },
-                attrs: {
-                    id: 'dir',
-                    path: info.path,
-                },
-                style: {
-                    textIndent: indent + 'px',
-                },
-                domProps: {
-                    innerHTML: info.name,
-                },
-            })
-        }
-        const fileChild = info => {
+        const child = (info, id, operate) => {
             if (info.isEdit) {
                 const input = h('input', {
                     class: {
@@ -150,7 +182,7 @@ export default {
                         keydown: event => {
                             //回车
                             if (event.keyCode === 13) {
-                                this.operateFile(info)
+                                operate(info)
                             }
                         },
                     },
@@ -162,7 +194,7 @@ export default {
             } else {
                 return h('p', {
                     attrs: {
-                        id: 'file',
+                        id,
                         path: info.path,
                     },
                     domProps: {
@@ -170,6 +202,26 @@ export default {
                     },
                 })
             }
+        }
+        const dirChild = info => {
+            return child(info, 'dir', this.operateDir)
+        }
+        const dir = (info, indent) => {
+            return h(
+                'div',
+                {
+                    class: {
+                        dir: true,
+                    },
+                    style: {
+                        textIndent: indent + 'px',
+                    },
+                },
+                [dirChild(info)]
+            )
+        }
+        const fileChild = info => {
+            return child(info, 'file', this.operateFile)
         }
         const file = (info, indent) => {
             return h(
@@ -191,6 +243,14 @@ export default {
             )
         }
         const renderDOM = (files, indent) => {
+            function setProp(item) {
+                let name = ''
+                if (item.name !== '') {
+                    name = item.path.split('\\').pop()
+                }
+                item.name = name
+                item.oldPath = item.path
+            }
             let arr = []
             const indentVal = 15
             indent += indentVal
@@ -198,17 +258,11 @@ export default {
                 const item = files[i]
                 if (!Array.isArray(item)) {
                     if (item.type === 'file') {
-                        let name = ''
-                        if (item.name !== '') {
-                            name = item.path.split('\\').pop()
-                        }
-                        item.name = name
-                        item.oldPath = item.path
+                        setProp(item)
                         const _file = file(item, indent)
                         arr.push(_file)
                     } else if (item.type === 'dir') {
-                        const name = item.path.split('\\').pop()
-                        item.name = name
+                        setProp(item)
                         const _dir = dir(item, indent - indentVal)
                         arr.push(_dir)
                     }

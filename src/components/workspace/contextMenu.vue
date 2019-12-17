@@ -25,7 +25,12 @@
         <div v-show="isShow(show.delteDir)" class="menu-item" ref="delteDir">
             删除文件夹
         </div>
-        <div v-show="isShow(show.createDir)" class="menu-item" ref="createDir">
+        <div
+            v-show="isShow(show.createDir)"
+            class="menu-item"
+            ref="createDir"
+            id="createDir"
+        >
             新增文件夹
         </div>
     </div>
@@ -50,10 +55,10 @@ export default {
             show: {
                 openDir: ['resizeDrag'],
                 createFile: ['dir'],
-                rename: ['file'],
+                rename: ['file', 'dir'],
                 delteFile: ['file'],
                 delteDir: ['dir'],
-                createDir: ['dir']
+                createDir: ['dir'],
             },
         }
     },
@@ -250,8 +255,19 @@ export default {
         createDir() {
             this.$refs.createDir.addEventListener('click', () => {
                 const arr = this.findArrOfDir(this.files)
+                const dir = [
+                    {
+                        name: '',
+                        path: this.path,
+                        type: 'dir',
+                        isEdit: true,
+                        isNewBuilt: true,
+                    },
+                ]
+                arr.push(dir)
+                this.$store.commit('setDir', dir)
             })
-        }
+        },
     },
 }
 </script>
@@ -266,7 +282,8 @@ export default {
     background-color: #fff;
     border-radius: 5px;
     z-index: 100;
-    background-color: #9e9ead;
+    background-color: #c3c6d3;
+    user-select: none;
     .menu-item {
         padding: 10px 20px;
         &:hover {
