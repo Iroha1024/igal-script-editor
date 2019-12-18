@@ -43,6 +43,7 @@ import { ipcRenderer } from 'electron'
 import { mapState } from 'vuex'
 
 import { readDir } from '@/utils/readIgal'
+import { findArrOfDir, findFileByPath, findArrOfArr } from '@/utils/findOrigin'
 
 export default {
     data() {
@@ -115,36 +116,10 @@ export default {
                 ipcRenderer.send('open-directory-dialog')
             })
         },
-        /**
-         * 递归遍历files，找到所选文件夹所在数组
-         */
-        findArrOfDir(arr) {
-            let list
-            for (const file of arr) {
-                if (file.path === this.path) return arr
-                if (Array.isArray(file)) {
-                    list = this.findArrOfDir(file)
-                    if (list) return list
-                }
-            }
-        },
-        /**
-         * 递归遍历files，找到对应path文件
-         */
-        findFileByPath(arr) {
-            let file
-            for (const item of arr) {
-                if (item.path === this.path) return item
-                if (Array.isArray(item)) {
-                    file = this.findFileByPath(item)
-                    if (file) return file
-                }
-            }
-        },
         //新建文件
         createFile() {
             this.$refs.createFile.addEventListener('click', () => {
-                const arr = this.findArrOfDir(this.files)
+                const arr = findArrOfDir(this.files, this.path)
                 const file = {
                     name: '',
                     path: this.path,
@@ -159,7 +134,7 @@ export default {
         //重命名
         rename() {
             this.$refs.rename.addEventListener('click', () => {
-                const file = this.findFileByPath(this.files)
+                const file = findFileByPath(this.files, this.path)
                 file.isEdit = true
                 this.$store.commit('setFile', file)
             })
@@ -167,24 +142,11 @@ export default {
         //删除文件
         delteFile() {
             this.$refs.delteFile.addEventListener('click', () => {
-                const file = this.findFileByPath(this.files)
-                const arr = this.findArrOfDir(this.files)
+                const file = findFileByPath(this.files, this.path)
+                const arr = findArrOfDir(this.files, this.path)
                 arr.splice(arr.indexOf(file), 1)
                 fs.unlink(file.path, err => {})
             })
-        },
-        /**
-         * 递归遍历files，找到所选文件夹所在数组所在的数组
-         */
-        findArrOfArr(arr, outerArr) {
-            let list
-            if (outerArr.includes(arr)) return outerArr
-            for (const file of outerArr) {
-                if (Array.isArray(file)) {
-                    list = this.findArrOfArr(arr, file)
-                }
-                if (list) return list
-            }
         },
         //删除文件夹
         delteDir() {
@@ -241,8 +203,8 @@ export default {
                 await stat(dirPath, files)
             }
             this.$refs.delteDir.addEventListener('click', () => {
-                const arr = this.findArrOfDir(this.files)
-                const outerArr = this.findArrOfArr(arr, this.files)
+                const arr = findArrOfDir(this.files, this.path)
+                const outerArr = findArrOfArr(arr, this.files)
                 if (this.flies === outerArr) {
                     this.$store.commit('setFiles', [])
                 } else {
@@ -256,13 +218,13 @@ export default {
         //新增文件夹
         createDir() {
             this.$refs.createDir.addEventListener('click', () => {
-                const arr = this.findArrOfDir(this.files)
+                const arr = findArrOfDir(this.files, this.path)
                 const dir = {
-                        name: '',
-                        path: this.path,
-                        type: 'dir',
-                        isEdit: true,
-                        isNewBuilt: true,
+                    name: '',
+                    path: this.path,
+                    type: 'dir',
+                    isEdit: true,
+                    isNewBuilt: true,
                 }
                 arr.push([dir])
                 this.$store.commit('setDir', dir)

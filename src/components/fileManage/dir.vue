@@ -4,6 +4,7 @@ import fs from 'fs'
 import { mapState } from 'vuex'
 
 import writeIgal from '@/utils/writeIgal'
+import { findArrOfDir } from '@/utils/findOrigin'
 
 export default {
     data() {
@@ -12,7 +13,7 @@ export default {
         }
     },
     computed: {
-        ...mapState(['configPath', 'files', 'file', 'dir']),
+        ...mapState(['configPath', 'files', 'file', 'dir', 'chosen']),
     },
     mounted() {
         this.clickControl()
@@ -79,6 +80,7 @@ export default {
                     this.value = ''
                     info.path = this.addSuffix(info.path, isAddSuffix)
                     if (this.checkHasSameName(upperPath, info.path)) {
+                        console.log('new same')
                         this.$store.commit('deleteIncompletefile', info)
                         return
                     }
@@ -150,6 +152,31 @@ export default {
             //右键单击其他区域
             window.addEventListener('contextmenu', rightClick)
         },
+        /**
+         * 切换文件夹状态
+         *
+         * 只有点击的文件夹切换折叠状态`isFolded`
+         *
+         * 其他文件及文件夹根据点击的文件夹改变`isShow`状态
+         * @param {Object} info 文件夹信息
+         * @param {Array} arr 文件夹所在数组
+         */
+        toggleShow(info, arr) {
+            for (const item of arr) {
+                if (item.type === 'dir' && item.path === info.path) {
+                    item.isFolded = !item.isFolded
+                } else {
+                    if (info.isFolded) {
+                        item.isShow = false
+                    } else {
+                        item.isShow = true
+                    }
+                }
+                if (Array.isArray(item)) {
+                    this.toggleShow(info, item)
+                }
+            }
+        },
     },
     render(h) {
         const dirWrapper = arr => {
@@ -192,15 +219,43 @@ export default {
                 })
                 return input
             } else {
-                return h('p', {
-                    attrs: {
-                        id,
-                        path: info.path,
+                return h(
+                    'div',
+                    {
+                        class: {
+                            'child-wrapper': true,
+                        },
                     },
-                    domProps: {
-                        innerHTML: info.name,
-                    },
-                })
+                    [
+                        h('div', {
+                            class: {
+                                icon: true,
+                                iconfont: true,
+                                'icon-weibiaoti5':
+                                    info.isFolded && id === 'dir',
+                                'icon-wenjianjia':
+                                    !info.isFolded && id === 'dir',
+                                'icon-text': id === 'file',
+                            },
+                            attrs: {
+                                id,
+                                path: info.path,
+                            },
+                        }),
+                        h('div', {
+                            class: {
+                                name: true,
+                            },
+                            attrs: {
+                                id,
+                                path: info.path,
+                            },
+                            domProps: {
+                                innerHTML: info.name,
+                            },
+                        }),
+                    ]
+                )
             }
         }
         const dirChild = info => {
@@ -212,9 +267,19 @@ export default {
                 {
                     class: {
                         dir: true,
+                        hidden: !info.isShow,
+                        chosen: info === this.chosen,
                     },
                     style: {
-                        textIndent: indent + 'px',
+                        paddingLeft: indent + 'px',
+                    },
+                    on: {
+                        click: () => {
+                            this.$store.commit('setChosen', info)
+                            const arr = findArrOfDir(this.files, info.path)
+                            this.toggleShow(info, arr)
+                            this.files.__ob__.dep.notify()
+                        },
                     },
                 },
                 [dirChild(info)]
@@ -229,12 +294,15 @@ export default {
                 {
                     class: {
                         file: true,
+                        hidden: !info.isShow,
+                        chosen: info === this.chosen,
                     },
                     style: {
-                        textIndent: indent + 'px',
+                        paddingLeft: indent + 'px',
                     },
                     on: {
                         click: () => {
+                            this.$store.commit('setChosen', info)
                             this.$router.push({ path: `/file/${info.path}` })
                         },
                     },
@@ -243,6 +311,7 @@ export default {
             )
         }
         const renderDOM = (files, indent) => {
+            //设置公共属性
             function setProp(item) {
                 let name = ''
                 if (item.name !== '') {
@@ -250,6 +319,9 @@ export default {
                 }
                 item.name = name
                 item.oldPath = item.path
+                if (!item.hasOwnProperty('isShow')) {
+                    item.isShow = true
+                }
             }
             let arr = []
             const indentVal = 15
@@ -263,6 +335,9 @@ export default {
                         arr.push(_file)
                     } else if (item.type === 'dir') {
                         setProp(item)
+                        if (!item.hasOwnProperty('isFolded')) {
+                            item.isFolded = false
+                        }
                         const _dir = dir(item, indent - indentVal)
                         arr.push(_dir)
                     }
@@ -273,7 +348,7 @@ export default {
             // console.log(arr);
             return dirWrapper(arr)
         }
-        return renderDOM(this.files, 0)
+        return renderDOM(this.files, 5)
     },
 }
 </script>
@@ -311,6 +386,24 @@ export default {
         font-size: 20px;
         &:focus {
             border: 1px solid #538ee7;
+        }
+    }
+    .child-wrapper {
+        display: flex;
+        .icon {
+        }
+        .name {
+            flex: 1;
+            padding-left: 5px;
+        }
+    }
+    .hidden {
+        display: none;
+    }
+    .chosen {
+        background-color: #c7c7c7;
+        &:hover {
+            background-color: #c7c7c7;
         }
     }
 }

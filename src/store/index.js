@@ -17,6 +17,8 @@ const store = new Vuex.Store({
         file: null,
         //当前操作的文件夹
         dir: null,
+        //当前被选择的文件或文件夹
+        chosen: null,
         //项目下所有序列uuid
         uuids: [],
     },
@@ -35,6 +37,9 @@ const store = new Vuex.Store({
         },
         setDir(state, dir) {
             state.dir = dir
+        },
+        setChosen(state, chosen) {
+            state.chosen = chosen
         },
         //删除未完成文件
         deleteIncompletefile(state, file) {
