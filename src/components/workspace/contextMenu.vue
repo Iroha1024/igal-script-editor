@@ -86,7 +86,7 @@ export default {
                 setTimeout(() => {
                     const width = contextMenu.offsetWidth
                     const height = contextMenu.offsetHeight
-                    contextMenu.style.visibility = 'visible'
+                    contextMenu.style.display = 'block'
                     contextMenu.style.top = event.clientY + 'px'
                     contextMenu.style.left = event.clientX + 'px'
                     if (event.clientX + width > viewPortWidth) {
@@ -98,7 +98,7 @@ export default {
                 }, 0)
             })
             window.addEventListener('click', () => {
-                contextMenu.style.visibility = 'hidden'
+                contextMenu.style.display = 'none'
             })
         },
         //菜单栏事件绑定
@@ -122,13 +122,14 @@ export default {
                 const arr = findArrOfDir(this.files, this.path)
                 const file = {
                     name: '',
-                    path: this.path,
+                    path: `${this.path}\\`,
                     type: 'file',
                     isEdit: true,
                     isNewBuilt: true,
                 }
                 arr.push(file)
                 this.$store.commit('setFile', file)
+                this.$store.commit('setChosen', file)
             })
         },
         //重命名
@@ -221,13 +222,14 @@ export default {
                 const arr = findArrOfDir(this.files, this.path)
                 const dir = {
                     name: '',
-                    path: this.path,
+                    path: `${this.path}\\`,
                     type: 'dir',
                     isEdit: true,
                     isNewBuilt: true,
                 }
                 arr.push([dir])
                 this.$store.commit('setDir', dir)
+                this.$store.commit('setChosen', dir)
             })
         },
     },
@@ -238,7 +240,7 @@ export default {
 .context-menu {
     width: 150px;
     width: fit-content;
-    visibility: hidden;
+    display: none;
     position: absolute;
     font-size: 18px;
     background-color: #fff;

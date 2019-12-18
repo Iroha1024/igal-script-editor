@@ -75,8 +75,9 @@ export default {
             if (this.value) {
                 //新建
                 if (info.isNewBuilt) {
-                    const upperPath = info.path
-                    info.path += `\\${this.value}`
+                    //获取上级路径，去除多余\，防止新增时出现相同path的dir
+                    const upperPath = info.path.slice(0, -1)
+                    info.path += this.value
                     this.value = ''
                     info.path = this.addSuffix(info.path, isAddSuffix)
                     if (this.checkHasSameName(upperPath, info.path)) {
@@ -229,7 +230,7 @@ export default {
                     [
                         h('div', {
                             class: {
-                                icon: true,
+                                // icon: true,
                                 iconfont: true,
                                 'icon-weibiaoti5':
                                     info.isFolded && id === 'dir',
@@ -275,6 +276,8 @@ export default {
                     },
                     on: {
                         click: () => {
+                            //防止创建时无必要的性能消耗
+                            if (!info.name) return
                             this.$store.commit('setChosen', info)
                             const arr = findArrOfDir(this.files, info.path)
                             this.toggleShow(info, arr)
@@ -302,6 +305,7 @@ export default {
                     },
                     on: {
                         click: () => {
+                            if (!info.name) return
                             this.$store.commit('setChosen', info)
                             this.$router.push({ path: `/file/${info.path}` })
                         },
@@ -390,8 +394,8 @@ export default {
     }
     .child-wrapper {
         display: flex;
-        .icon {
-        }
+        // .icon {
+        // }
         .name {
             flex: 1;
             padding-left: 5px;

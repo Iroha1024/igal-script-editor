@@ -105,7 +105,7 @@ export default {
 
                         // minimum size
                         interact.modifiers.restrictSize({
-                            min: { width: 250 },
+                            min: { width: 280 },
                         }),
                     ],
 
@@ -136,21 +136,19 @@ export default {
 
 <style lang="scss" scoped>
 .file-manage {
-    min-width: 250px;
+    min-width: 280px;
     flex-shrink: 0;
     height: inherit;
-    background-color: $list-bg-color;
     user-select: none;
     z-index: 100;
+    overflow-y: scroll;
     .resize-drag {
         max-width: 400px;
-        height: inherit;
-        padding: 0px 5px;
-        border: 5px solid transparent;
+        min-height: 100%;
+        border: 8px solid transparent;
         box-sizing: border-box;
-        height: inherit;
         touch-action: none;
-        overflow: hidden scroll;
+        background-color: $list-bg-color;
     }
 }
 </style>
