@@ -49,7 +49,7 @@ export default {
         return {
             //右键点击区域id
             currentWindow: null,
-            //文件路径
+            //右键点击文件路径
             path: '',
             //功能只在相应id区域出现
             show: {
@@ -73,26 +73,28 @@ export default {
         isShow(arr) {
             return arr.includes(this.currentWindow)
         },
-        //右键菜单栏，获取指定区域id和path
+        //右键菜单栏
         openMenu() {
             const contextMenu = this.$refs.contextMenu
-            const viewPortWidth = document.documentElement.clientWidth
-            const viewPortHeight = document.documentElement.clientHeight
-            const width = parseInt(contextMenu.offsetWidth)
-            const height = parseInt(contextMenu.offsetHeight)
             window.addEventListener('contextmenu', event => {
+                //获取指定区域id和path
                 this.currentWindow = event.target.id
                 this.path = event.target.getAttribute('path')
-                // console.log(this.currentWindow, this.path);
-                contextMenu.style.visibility = 'visible'
-                contextMenu.style.top = event.clientY + 'px'
-                contextMenu.style.left = event.clientX + 'px'
-                if (event.clientX + width > viewPortWidth) {
-                    contextMenu.style.left = event.clientX - width + 'px'
-                }
-                if (event.clientY + height > viewPortHeight) {
-                    contextMenu.style.top = event.clientY - height + 'px'
-                }
+                const viewPortWidth = document.documentElement.clientWidth
+                const viewPortHeight = document.documentElement.clientHeight
+                setTimeout(() => {
+                    const width = contextMenu.offsetWidth
+                    const height = contextMenu.offsetHeight
+                    contextMenu.style.visibility = 'visible'
+                    contextMenu.style.top = event.clientY + 'px'
+                    contextMenu.style.left = event.clientX + 'px'
+                    if (event.clientX + width > viewPortWidth) {
+                        contextMenu.style.left = event.clientX - width + 'px'
+                    }
+                    if (event.clientY + height > viewPortHeight) {
+                        contextMenu.style.top = event.clientY - height + 'px'
+                    }
+                }, 0)
             })
             window.addEventListener('click', () => {
                 contextMenu.style.visibility = 'hidden'

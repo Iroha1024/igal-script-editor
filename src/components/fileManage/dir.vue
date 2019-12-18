@@ -66,7 +66,7 @@ export default {
          *
          * @param {*} info 文件（夹）信息
          * @param {boolean} isAddSuffix 是否添加后缀
-         * @param {Fuction} callback 后续执行函数
+         * @param {Function} callback 后续执行函数
          */
         operate(info, isAddSuffix, callback) {
             if (!info) return
