@@ -22,18 +22,18 @@ const Type = {
  */
 const linebreak = {
     windows: '\r\n',
-    unix: '\n',
-    mac: '\r',
+    linux: '\n',
+    mac: '\n',
 }
 
 export function getLinebreak() {
     switch (process.platform) {
-        case 'darwin':
-            return linebreak.mac
-        case 'freebsd':
-            return linebreak.unix
         case 'win32':
             return linebreak.windows
+        case 'linux':
+            return linebreak.linux
+        case 'darwin':
+            return linebreak.mac
     }
 }
 

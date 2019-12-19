@@ -4,65 +4,12 @@ import Path from 'path'
 import Mark, { Type, getLinebreak } from './mark'
 
 /**
- * 同步提取igal文件内容
- * @param {string} path  igal文件地址
- * @param {Array} igal  序列列表
- * @param {string} setting  setting.json地址
- */
-export default function readIgalSync(path, igal, setting) {
-    const file = fs.readFileSync(path, 'utf-8')
-
-    //读取配置文件setting.json
-    let json
-    try {
-        json = JSON.parse(fs.readFileSync(setting, 'utf-8'))
-    } catch (error) {}
-
-    extractContent(file, json, igal)
-}
-
-export function readJson(setting) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(setting, 'utf-8', (err, json) => {
-            if (err) return reject()
-            json = JSON.parse(json)
-            resolve(json)
-        })
-    })
-}
-
-/**
- * 异步提取igal文件内容
- * @param {string} path  igal文件地址
- * @param {string} setting  setting.json地址
- */
-export async function readIgal(path, setting) {
-    const readFile = function() {
-        return new Promise((resolve, reject) => {
-            fs.readFile(path, 'utf-8', (err, file) => {
-                if (err) return reject()
-                resolve(file)
-            })
-        })
-    }
-    let igal = []
-    const file = await readFile()
-    const json = await readJson(setting)
-    extractContent(file, json, igal)
-    return igal
-}
-
-function firstElement(content) {
-    return content[0]
-}
-
-/**
  * next是否为空
  * e.g. next: ['']，isNextEmpty(next) === true
  * @param {Array} arr
  */
 export function isNextEmpty(arr) {
-    return firstElement(arr) === ''
+    return arr[0] === ''
 }
 
 /**
@@ -82,6 +29,110 @@ function splitBy(content, separator) {
 }
 
 /**
+ * 同步提取igal文件内容
+ * @param {string} path  igal文件地址
+ * @param {Array} igal  序列列表
+ * @param {string} setting  setting.json地址
+ */
+export default function readIgalSync(path, igal, setting) {
+    const file = fs.readFileSync(path, 'utf-8')
+
+    //读取配置文件setting.json
+    let json
+    try {
+        json = JSON.parse(fs.readFileSync(setting, 'utf-8'))
+    } catch (error) {}
+
+    extractContent(file, json, igal)
+}
+
+/**
+ * 读取json
+ * @param {string} setting setting.json路径
+ */
+export function readJson(setting) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(setting, 'utf-8', (err, json) => {
+            if (err) return reject()
+            json = JSON.parse(json)
+            resolve(json)
+        })
+    })
+}
+
+/**
+ * 异步提取igal文件内容
+ * @param {string} path  igal文件地址
+ * @param {string} setting  setting.json地址
+ * @returns {Promise<Array>}
+ */
+export async function readIgal(path, setting) {
+    const readFile = function() {
+        return new Promise((resolve, reject) => {
+            fs.readFile(path, 'utf-8', (err, file) => {
+                if (err) return reject()
+                resolve(file)
+            })
+        })
+    }
+    let igal = []
+    const file = await readFile()
+    const json = await readJson(setting)
+    extractContent(file, json, igal)
+    return igal
+}
+
+/**
+ * 读取文件夹内容
+ * @param {string} path 文件夹路径
+ * @returns {Promise<fs.Dirent[]>}
+ */
+export function readDir(path) {
+    return new Promise((resolve, reject) => {
+        fs.readdir(path, { withFileTypes: true }, (err, files) => {
+            if (err) return reject()
+            resolve(files)
+        })
+    })
+}
+
+/**
+ * 读取项目下所有序列
+ * @param {string} path 项目文件夹路径
+ * @param {string} setting setting.json路径
+ */
+export async function readAllSequences(path, setting) {
+    async function operateItemOfDir(path, files) {
+        //存放igal的数组 e.g. [igal, igal, [sequence, sequence]]
+        const wrappedList = []
+        for (const file of files) {
+            if (file.isDirectory()) {
+                const deepWrappedList = await readAllIgal(
+                    `${path}\\${file.name}`
+                )
+                deepWrappedList.forEach(igal => {
+                    wrappedList.push(igal)
+                })
+            } else if (Path.extname(file.name) === '.igal') {
+                const igal = await readIgal(`${path}\\${file.name}`, setting)
+                wrappedList.push(igal)
+            }
+        }
+        return wrappedList
+    }
+    async function readAllIgal(path) {
+        const files = await readDir(path)
+        const data = await operateItemOfDir(path, files)
+        return data
+    }
+
+    let wrappedList, list
+    wrappedList = await readAllIgal(path)
+    list = wrappedList.flat()
+    return list
+}
+
+/**
  * 提取每行内容
  * @param {string} file igal读取的字符串
  * @param {object} json 配置json对象
@@ -97,7 +148,7 @@ function extractContent(file, json, igal) {
     content.forEach(line => {
         const each_line = {}
         let part = []
-        switch (firstElement(line)) {
+        switch (line[0]) {
             case Mark.start:
                 sequence = {}
                 sequence.active = false
@@ -164,67 +215,6 @@ function extractContent(file, json, igal) {
     })
 }
 
-export function readDir(path) {
-    return new Promise((resolve, reject) => {
-        fs.readdir(path, (err, files) => {
-            if (err) return reject()
-            resolve(files)
-        })
-    })
-}
-
-/**
- * 读取项目下所有序列
- * @param {string} path 项目文件夹路径
- * @param {string} setting setting.json路径
- */
-export async function readAllSequences(path, setting) {
-    const stat = function(path, files) {
-        const wrappedList = []
-        const promiseList = []
-        return new Promise(resolve => {
-            files.forEach(file => {
-                const promise = new Promise((resolve, reject) => {
-                    fs.stat(`${path}\\${file}`, (err, stats) => {
-                        if (err) return reject()
-                        if (stats.isDirectory()) {
-                            readAllIgal(`${path}\\${file}`).then(
-                                deepWrappedList => {
-                                    deepWrappedList.forEach(igal => {
-                                        wrappedList.push(igal)
-                                    })
-                                    resolve()
-                                }
-                            )
-                        } else if (Path.extname(file) === '.igal') {
-                            readIgal(`${path}\\${file}`, setting).then(igal => {
-                                wrappedList.push(igal)
-                                resolve()
-                            })
-                        } else {
-                            resolve()
-                        }
-                    })
-                })
-                promiseList.push(promise)
-            })
-            Promise.all(promiseList).then(() => {
-                resolve(wrappedList)
-            })
-        })
-    }
-    async function readAllIgal(path) {
-        const files = await readDir(path)
-        const data = await stat(path, files)
-        return data
-    }
-
-    let wrappedList, list
-    wrappedList = await readAllIgal(path)
-    list = wrappedList.flat()
-    return list
-}
-
 /**
  * 对序列进行额外操作
  * @param {Array} igal  序列列表
@@ -269,7 +259,7 @@ function getConfig(path, igal) {
         } catch (error) {}
         return json && getSequence(json.head, igal)
     } else {
-        return firstElement(igal)
+        return igal[0]
     }
 }
 

@@ -1,7 +1,7 @@
 <template>
     <div class="file-manage">
         <div class="resize-drag" id="resizeDrag">
-            <dir :files="files"></dir>
+            <dir></dir>
         </div>
     </div>
 </template>
@@ -15,14 +15,11 @@ import { mapState } from 'vuex'
 
 import dir from '../fileManage/dir'
 
+import { readDir } from '@/utils/readIgal'
+
 export default {
-    data() {
-        return {
-            files: [],
-        }
-    },
     computed: {
-        ...mapState(['dirPath']),
+        ...mapState(['dirPath', 'files']),
     },
     components: {
         dir,
@@ -37,7 +34,7 @@ export default {
             ipcRenderer.on('select-dir', (event, path) => {
                 //没选择文件夹，则取消
                 if (path.length < 1) return
-                this.files = []
+                this.$store.commit('setFiles', [])
                 let dirPath = path[0]
                 this.setDirPath(dirPath)
                 if (dirPath) {
@@ -49,8 +46,6 @@ export default {
                         isNewBuilt: false,
                     })
                     this.getDirContents(dirPath, this.files)
-                    this.setFiles(this.files)
-                    // console.log(this.files);
                 }
             })
         },
@@ -63,39 +58,43 @@ export default {
             this.$store.commit('setConfigPath', path)
             this.$store.dispatch('updateUuids')
         },
-        //获取所有文件及文件夹
-        setFiles(files) {
-            this.$store.commit('setFiles', files)
-        },
         // 获取文件夹内信息，传入files
-        getDirContents(path, parent) {
-            fs.readdirSync(path).forEach(file => {
-                if (fs.statSync(`${path}\\${file}`).isDirectory()) {
-                    const newParent = []
-                    parent.push(newParent)
-                    newParent.push({
-                        name: file,
-                        path: `${path}\\${file}`,
-                        type: 'dir',
-                        isEdit: false,
-                        isNewBuilt: false,
-                    })
-                    this.getDirContents(`${path}\\${file}`, newParent)
-                } else {
-                    if (
-                        `${path}\\${file}` === `${this.dirPath}\\setting.json`
-                    ) {
-                        this.setConfigPath(`${path}\\${file}`)
+        async getDirContents(path, parent) {
+            const operateItemOfDir = async (path, files, parent) => {
+                for (const file of files) {
+                    if (file.isDirectory()) {
+                        const newParent = []
+                        parent.push(newParent)
+                        newParent.push({
+                            name: file.name,
+                            path: `${path}\\${file.name}`,
+                            type: 'dir',
+                            isNewBuilt: false,
+                            isEdit: false,
+                        })
+                        await this.getDirContents(
+                            `${path}\\${file.name}`,
+                            newParent
+                        )
+                    } else {
+                        if (
+                            `${path}\\${file.name}` ===
+                            `${this.dirPath}\\setting.json`
+                        ) {
+                            this.setConfigPath(`${path}\\${file.name}`)
+                        }
+                        parent.push({
+                            name: file.name,
+                            path: `${path}\\${file.name}`,
+                            type: 'file',
+                            isEdit: false,
+                            isNewBuilt: false,
+                        })
                     }
-                    parent.push({
-                        name: file,
-                        path: `${path}\\${file}`,
-                        type: 'file',
-                        isEdit: false,
-                        isNewBuilt: false,
-                    })
                 }
-            })
+            }
+            const files = await readDir(path)
+            await operateItemOfDir(path, files, parent)
         },
         //调整文件区大小
         resize() {

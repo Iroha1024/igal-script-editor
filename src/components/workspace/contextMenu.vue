@@ -84,7 +84,6 @@ export default {
                 this.path = event.target.getAttribute('path')
                 const viewPortWidth = document.documentElement.clientWidth
                 const viewPortHeight = document.documentElement.clientHeight
-                contextMenu.style.display = 'block'
                 setTimeout(() => {
                     const width = contextMenu.offsetWidth
                     const height = contextMenu.offsetHeight
@@ -96,10 +95,11 @@ export default {
                     if (event.clientY + height > viewPortHeight) {
                         contextMenu.style.top = event.clientY - height + 'px'
                     }
+                    contextMenu.style.visibility = 'visible'
                 }, 0)
             })
             window.addEventListener('click', () => {
-                contextMenu.style.display = 'none'
+                contextMenu.style.visibility = 'hidden'
             })
         },
         //菜单栏事件绑定
@@ -173,41 +173,20 @@ export default {
                     })
                 })
             }
-            function stat(path, files) {
-                const promiseList = []
-                return new Promise((resolve, reject) => {
-                    files.forEach(file => {
-                        const promise = new Promise((resolve, reject) => {
-                            fs.stat(`${path}\\${file}`, (err, stats) => {
-                                if (err) return reject()
-                                if (stats.isDirectory()) {
-                                    deleteFolderRecursively(
-                                        `${path}\\${file}`
-                                    ).then(() => {
-                                        deleteFolder(`${path}\\${file}`).then(
-                                            () => {
-                                                resolve()
-                                            }
-                                        )
-                                    })
-                                } else {
-                                    deleteFile(`${path}\\${file}`).then(() => {
-                                        resolve()
-                                    })
-                                }
-                            })
-                        })
-                        promiseList.push(promise)
-                    })
-                    Promise.all(promiseList).then(() => {
-                        resolve()
-                    })
-                })
+            async function operateItemOfDir(path, files) {
+                for (const file of files) {
+                    if (file.isDirectory()) {
+                        await deleteFolderRecursively(`${path}\\${file.name}`)
+                        await deleteFolder(`${path}\\${file.name}`)
+                    } else {
+                        await deleteFile(`${path}\\${file.name}`)
+                    }
+                }
             }
             //递归删除文件夹
-            const deleteFolderRecursively = async dirPath => {
+            async function deleteFolderRecursively(dirPath) {
                 const files = await readDir(dirPath)
-                await stat(dirPath, files)
+                await operateItemOfDir(dirPath, files)
             }
             this.$refs.delteDir.addEventListener('click', () => {
                 const arr = findArrOfDir(this.files, this.path)
@@ -225,7 +204,12 @@ export default {
         //新增文件夹
         createDir() {
             this.$refs.createDir.addEventListener('click', () => {
+                const upperDir = findFileByPath(this.files, this.path)
                 const arr = findArrOfDir(this.files, this.path)
+                //如果创建文件夹时，文件夹折叠，自动打开
+                if (upperDir.isFolded) {
+                    toggleDirShow(upperDir, arr)
+                }
                 const dir = {
                     name: '',
                     path: `${this.path}\\`,
@@ -246,7 +230,7 @@ export default {
 .context-menu {
     width: 150px;
     width: fit-content;
-    display: none;
+    visibility: hidden;
     position: absolute;
     font-size: 18px;
     background-color: #fff;
