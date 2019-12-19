@@ -41,7 +41,13 @@ export default {
                 let dirPath = path[0]
                 this.setDirPath(dirPath)
                 if (dirPath) {
-                    this.files.push({ path: dirPath, type: 'dir' })
+                    this.files.push({
+                        name: dirPath.split('\\').pop(),
+                        path: dirPath,
+                        type: 'dir',
+                        isEdit: false,
+                        isNewBuilt: false,
+                    })
                     this.getDirContents(dirPath, this.files)
                     this.setFiles(this.files)
                     // console.log(this.files);
@@ -68,6 +74,7 @@ export default {
                     const newParent = []
                     parent.push(newParent)
                     newParent.push({
+                        name: file,
                         path: `${path}\\${file}`,
                         type: 'dir',
                         isEdit: false,
@@ -81,6 +88,7 @@ export default {
                         this.setConfigPath(`${path}\\${file}`)
                     }
                     parent.push({
+                        name: file,
                         path: `${path}\\${file}`,
                         type: 'file',
                         isEdit: false,
@@ -135,14 +143,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+$width: 280px;
 .file-manage {
-    min-width: 280px;
-    flex-shrink: 0;
+    min-width: $width;
     height: inherit;
     user-select: none;
     z-index: 100;
     overflow-y: scroll;
     .resize-drag {
+        width: $width;
         max-width: 400px;
         min-height: 100%;
         border: 8px solid transparent;

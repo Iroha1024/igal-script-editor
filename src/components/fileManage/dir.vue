@@ -5,6 +5,7 @@ import { mapState } from 'vuex'
 
 import writeIgal from '@/utils/writeIgal'
 import { findArrOfDir } from '@/utils/findOrigin'
+import toggleDirShow from '@/utils/toggleDirShow'
 
 export default {
     data() {
@@ -85,6 +86,7 @@ export default {
                         this.$store.commit('deleteIncompletefile', info)
                         return
                     }
+                    info.oldPath = info.path
                     info.name = info.path.split('\\').pop()
                     callback()
                 } else {
@@ -101,8 +103,11 @@ export default {
                         return
                     }
                     info.path = newPath
-                    fs.renameSync(info.oldPath, info.path)
-                    info.oldPath = info.path
+                    info.name = info.path.split('\\').pop()
+                    fs.rename(info.oldPath, info.path, err => {
+                        if (err) throw err
+                        info.oldPath = info.path
+                    })
                 }
             } else if (info.isNewBuilt) {
                 this.$store.commit('deleteIncompletefile', info)
@@ -152,31 +157,6 @@ export default {
             window.addEventListener('click', click)
             //右键单击其他区域
             window.addEventListener('contextmenu', rightClick)
-        },
-        /**
-         * 切换文件夹状态
-         *
-         * 只有点击的文件夹切换折叠状态`isFolded`
-         *
-         * 其他文件及文件夹根据点击的文件夹改变`isShow`状态
-         * @param {Object} info 文件夹信息
-         * @param {Array} arr 文件夹所在数组
-         */
-        toggleShow(info, arr) {
-            for (const item of arr) {
-                if (item.type === 'dir' && item.path === info.path) {
-                    item.isFolded = !item.isFolded
-                } else {
-                    if (info.isFolded) {
-                        item.isShow = false
-                    } else {
-                        item.isShow = true
-                    }
-                }
-                if (Array.isArray(item)) {
-                    this.toggleShow(info, item)
-                }
-            }
         },
     },
     render(h) {
@@ -280,8 +260,7 @@ export default {
                             if (!info.name) return
                             this.$store.commit('setChosen', info)
                             const arr = findArrOfDir(this.files, info.path)
-                            this.toggleShow(info, arr)
-                            this.files.__ob__.dep.notify()
+                            toggleDirShow(info, arr)
                         },
                     },
                 },
@@ -316,15 +295,12 @@ export default {
         }
         const renderDOM = (files, indent) => {
             //设置公共属性
-            function setProp(item) {
-                let name = ''
-                if (item.name !== '') {
-                    name = item.path.split('\\').pop()
+            const setProp = item => {
+                if (!item.hasOwnProperty('oldPath')) {
+                    this.$set(item, 'oldPath', item.path)
                 }
-                item.name = name
-                item.oldPath = item.path
                 if (!item.hasOwnProperty('isShow')) {
-                    item.isShow = true
+                    this.$set(item, 'isShow', true)
                 }
             }
             let arr = []
@@ -340,7 +316,7 @@ export default {
                     } else if (item.type === 'dir') {
                         setProp(item)
                         if (!item.hasOwnProperty('isFolded')) {
-                            item.isFolded = false
+                            this.$set(item, 'isFolded', false)
                         }
                         const _dir = dir(item, indent - indentVal)
                         arr.push(_dir)

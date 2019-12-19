@@ -15,7 +15,7 @@ export function findArrOfDir(files, path) {
 }
 
 /**
- * 递归遍历files，找到对应path文件
+ * 递归遍历files，找到对应path文件(夹)
  * @param {Array} files 存储file与dir的数组
  * @param {string} path 当前路径
  */

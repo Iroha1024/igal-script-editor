@@ -44,6 +44,7 @@ import { mapState } from 'vuex'
 
 import { readDir } from '@/utils/readIgal'
 import { findArrOfDir, findFileByPath, findArrOfArr } from '@/utils/findOrigin'
+import toggleDirShow from '@/utils/toggleDirShow'
 
 export default {
     data() {
@@ -83,10 +84,10 @@ export default {
                 this.path = event.target.getAttribute('path')
                 const viewPortWidth = document.documentElement.clientWidth
                 const viewPortHeight = document.documentElement.clientHeight
+                contextMenu.style.display = 'block'
                 setTimeout(() => {
                     const width = contextMenu.offsetWidth
                     const height = contextMenu.offsetHeight
-                    contextMenu.style.display = 'block'
                     contextMenu.style.top = event.clientY + 'px'
                     contextMenu.style.left = event.clientX + 'px'
                     if (event.clientX + width > viewPortWidth) {
@@ -119,7 +120,12 @@ export default {
         //新建文件
         createFile() {
             this.$refs.createFile.addEventListener('click', () => {
+                const dir = findFileByPath(this.files, this.path)
                 const arr = findArrOfDir(this.files, this.path)
+                //如果创建文件时，文件夹折叠，自动打开
+                if (dir.isFolded) {
+                    toggleDirShow(dir, arr)
+                }
                 const file = {
                     name: '',
                     path: `${this.path}\\`,
