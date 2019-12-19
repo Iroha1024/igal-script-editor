@@ -32,12 +32,12 @@ export default {
         //获取文件夹信息
         getDirName() {
             ipcRenderer.on('select-dir', (event, path) => {
-                //没选择文件夹，则取消
-                if (path.length < 1) return
-                this.$store.commit('setFiles', [])
                 let dirPath = path[0]
-                this.setDirPath(dirPath)
+                //没选择文件夹，则取消
                 if (dirPath) {
+                    this.$store.commit('setFiles', [])
+                    //获取项目文件路径
+                    this.$store.commit('setDirPath', dirPath)
                     this.files.push({
                         name: dirPath.split('\\').pop(),
                         path: dirPath,
@@ -49,16 +49,7 @@ export default {
                 }
             })
         },
-        //获取项目文件路径
-        setDirPath(path) {
-            this.$store.commit('setDirPath', path)
-        },
-        //获取配置信息路径，更新uuids
-        setConfigPath(path) {
-            this.$store.commit('setConfigPath', path)
-            this.$store.dispatch('updateUuids')
-        },
-        // 获取文件夹内信息，传入files
+        //获取文件夹内信息，传入files
         async getDirContents(path, parent) {
             const operateItemOfDir = async (path, files, parent) => {
                 for (const file of files) {
@@ -81,7 +72,9 @@ export default {
                             `${path}\\${file.name}` ===
                             `${this.dirPath}\\setting.json`
                         ) {
-                            this.setConfigPath(`${path}\\${file.name}`)
+                            //获取配置信息路径，更新uuids
+                            this.$store.commit('setConfigPath', `${path}\\${file.name}`)
+                            this.$store.dispatch('updateUuids')
                         }
                         parent.push({
                             name: file.name,

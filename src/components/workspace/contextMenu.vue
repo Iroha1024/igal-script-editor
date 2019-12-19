@@ -143,7 +143,11 @@ export default {
             this.$refs.rename.addEventListener('click', () => {
                 const file = findFileByPath(this.files, this.path)
                 file.isEdit = true
-                this.$store.commit('setFile', file)
+                if (file.type === 'file') {
+                    this.$store.commit('setFile', file)
+                } else {
+                    this.$store.commit('setDir', file)
+                }
             })
         },
         //删除文件

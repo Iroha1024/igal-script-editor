@@ -143,14 +143,14 @@ export default {
                 if (!noEffectId.includes(event.target.id)) {
                     this.operateFile(this.file)
                     this.$store.commit('setFile', null)
-                    this.operateFile(this.dir)
+                    this.operateDir(this.dir)
                     this.$store.commit('setDir', null)
                 }
             }
             const rightClick = () => {
                 this.operateFile(this.file)
                 this.$store.commit('setFile', null)
-                this.operateFile(this.dir)
+                this.operateDir(this.dir)
                 this.$store.commit('setDir', null)
             }
             //左键单击其他区域
