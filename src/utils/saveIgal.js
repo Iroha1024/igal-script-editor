@@ -1,5 +1,7 @@
 import fs from 'fs'
-import Mark, { Type, getLinebreak } from './mark'
+import { EOL } from 'os'
+
+import Mark, { Type } from './mark'
 
 /**
  * 保存
@@ -27,13 +29,13 @@ export default function saveIgal(igal, path) {
                     return ''
             }
         })
-        main = main.join(getLinebreak())
+        main = main.join(EOL)
         let next = sequence.next.join('|')
         next = `${Mark.end}next ${next}`
-        sequence = [start, main, next].join(getLinebreak()) + getLinebreak()
+        sequence = [start, main, next].join(EOL) + EOL
         return sequence
     })
-    data = data.join(getLinebreak())
+    data = data.join(EOL)
     // console.log(data);
     return new Promise((resolve, reject) => {
         fs.writeFile(path, data, err => {

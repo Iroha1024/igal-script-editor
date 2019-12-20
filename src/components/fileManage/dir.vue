@@ -1,5 +1,6 @@
 <script>
 import fs from 'fs'
+import Path from 'path'
 
 import { mapState } from 'vuex'
 
@@ -29,18 +30,7 @@ export default {
         checkHasSameName(upperPath, newPath) {
             return fs
                 .readdirSync(upperPath)
-                .some(file => newPath === `${upperPath}\\${file}`)
-        },
-        /**
-         * 获取当前路径的上一级路径
-         * @param {string} path 文件路径
-         * @returns {string}
-         */
-        getupperPath(path) {
-            return path
-                .split('\\')
-                .slice(0, -1)
-                .join('\\')
+                .some(file => newPath === Path.resolve(upperPath, file))
         },
         /**
          * 若新增文件不为json，且不为igal，则自动加上.igal后缀
@@ -87,12 +77,12 @@ export default {
                         return
                     }
                     info.oldPath = info.path
-                    info.name = info.path.split('\\').pop()
+                    info.name = Path.basename(info.path)
                     callback()
                 } else {
                     //重命名，先将path改为上级路径
-                    const upperPath = this.getupperPath(info.path)
-                    let newPath = `${upperPath}\\${this.value}`
+                    const upperPath = Path.dirname(info.path)
+                    let newPath = Path.resolve(upperPath, this.value)
                     this.value = ''
                     newPath = this.addSuffix(newPath, isAddSuffix)
                     if (
@@ -103,7 +93,7 @@ export default {
                         return
                     }
                     info.path = newPath
-                    info.name = info.path.split('\\').pop()
+                    info.name = Path.basename(info.path)
                     fs.rename(info.oldPath, info.path, err => {
                         if (err) throw err
                         info.oldPath = info.path
@@ -115,12 +105,22 @@ export default {
         },
         operateFile(file) {
             this.operate(file, true, () => {
-                writeIgal(this.configPath, file.path).then(() => {
-                    file.isNewBuilt = false
-                    this.$router.push({
-                        path: `/file/${file.path}`,
+                const exname = Path.extname(file.path)
+                if (exname === '.igal') {
+                    writeIgal(this.configPath, file.path).then(() => {
+                        file.isNewBuilt = false
+                        this.$router.push({
+                            path: `/file/${file.path}`,
+                        })
                     })
-                })
+                }
+                if (exname === '.json') {
+                    const json = {
+                        head: '1',
+                        customized: ['title', 'description'],
+                    }
+                    fs.writeFile(file.path, JSON.stringify(json), err => {})
+                }
             })
         },
         operateDir(dir) {
@@ -197,6 +197,7 @@ export default {
                 })
                 this.$nextTick(() => {
                     input.elm.focus()
+                    input.elm.select()
                 })
                 return input
             } else {

@@ -1,7 +1,8 @@
 import fs from 'fs'
 import Path from 'path'
+import { EOL } from 'os'
 
-import Mark, { Type, getLinebreak } from './mark'
+import Mark, { Type } from './mark'
 
 /**
  * next是否为空
@@ -139,8 +140,7 @@ export async function readAllSequences(path, setting) {
  * @param {Array} igal  序列列表
  */
 function extractContent(file, json, igal) {
-    let separator = getLinebreak()
-    const content = file.split(separator)
+    const content = file.split(EOL)
     const customized = json.customized
     let sequence,
         data,

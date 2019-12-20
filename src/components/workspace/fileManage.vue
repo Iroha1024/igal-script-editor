@@ -8,6 +8,7 @@
 
 <script>
 import fs from 'fs'
+import Path from 'path'
 
 import { ipcRenderer } from 'electron'
 import interact from 'interactjs'
@@ -39,7 +40,7 @@ export default {
                     //获取项目文件路径
                     this.$store.commit('setDirPath', dirPath)
                     this.files.push({
-                        name: dirPath.split('\\').pop(),
+                        name: Path.basename(dirPath),
                         path: dirPath,
                         type: 'dir',
                         isEdit: false,
@@ -58,27 +59,30 @@ export default {
                         parent.push(newParent)
                         newParent.push({
                             name: file.name,
-                            path: `${path}\\${file.name}`,
+                            path: Path.resolve(path, file.name),
                             type: 'dir',
                             isNewBuilt: false,
                             isEdit: false,
                         })
                         await this.getDirContents(
-                            `${path}\\${file.name}`,
+                            Path.resolve(path, file.name),
                             newParent
                         )
                     } else {
                         if (
-                            `${path}\\${file.name}` ===
-                            `${this.dirPath}\\setting.json`
+                            Path.resolve(path, file.name) ===
+                            Path.resolve(this.dirPath, 'setting.json')
                         ) {
                             //获取配置信息路径，更新uuids
-                            this.$store.commit('setConfigPath', `${path}\\${file.name}`)
+                            this.$store.commit(
+                                'setConfigPath',
+                                Path.resolve(path, file.name)
+                            )
                             this.$store.dispatch('updateUuids')
                         }
                         parent.push({
                             name: file.name,
-                            path: `${path}\\${file.name}`,
+                            path: Path.resolve(path, file.name),
                             type: 'file',
                             isEdit: false,
                             isNewBuilt: false,

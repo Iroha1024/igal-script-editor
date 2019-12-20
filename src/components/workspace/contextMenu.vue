@@ -33,13 +33,21 @@
         >
             新增文件夹
         </div>
+        <div
+            v-show="isShow(show.showItemInFolder)"
+            class="menu-item"
+            ref="showItemInFolder"
+        >
+            显示位置
+        </div>
     </div>
 </template>
 
 <script>
 import fs from 'fs'
+import Path from 'path'
 
-import { ipcRenderer } from 'electron'
+import { ipcRenderer, shell } from 'electron'
 import { mapState } from 'vuex'
 
 import { readDir } from '@/utils/readIgal'
@@ -61,6 +69,7 @@ export default {
                 delteFile: ['file'],
                 delteDir: ['dir'],
                 createDir: ['dir'],
+                showItemInFolder: ['file', 'dir'],
             },
         }
     },
@@ -110,6 +119,7 @@ export default {
             this.delteFile()
             this.delteDir()
             this.createDir()
+            this.showItemInFolder()
         },
         //打开文件夹
         openDirectory() {
@@ -128,7 +138,7 @@ export default {
                 }
                 const file = {
                     name: '',
-                    path: `${this.path}\\`,
+                    path: `${this.path}${Path.sep}`,
                     type: 'file',
                     isEdit: true,
                     isNewBuilt: true,
@@ -156,42 +166,11 @@ export default {
                 const file = findFileByPath(this.files, this.path)
                 const arr = findArrOfDir(this.files, this.path)
                 arr.splice(arr.indexOf(file), 1)
-                fs.unlink(file.path, err => {})
+                shell.moveItemToTrash(this.path)
             })
         },
         //删除文件夹
         delteDir() {
-            function deleteFile(path) {
-                return new Promise((resolve, reject) => {
-                    fs.unlink(path, err => {
-                        if (err) return reject()
-                        resolve()
-                    })
-                })
-            }
-            function deleteFolder(path) {
-                return new Promise((resolve, reject) => {
-                    fs.rmdir(path, err => {
-                        if (err) return reject()
-                        resolve()
-                    })
-                })
-            }
-            async function operateItemOfDir(path, files) {
-                for (const file of files) {
-                    if (file.isDirectory()) {
-                        await deleteFolderRecursively(`${path}\\${file.name}`)
-                        await deleteFolder(`${path}\\${file.name}`)
-                    } else {
-                        await deleteFile(`${path}\\${file.name}`)
-                    }
-                }
-            }
-            //递归删除文件夹
-            async function deleteFolderRecursively(dirPath) {
-                const files = await readDir(dirPath)
-                await operateItemOfDir(dirPath, files)
-            }
             this.$refs.delteDir.addEventListener('click', () => {
                 const arr = findArrOfDir(this.files, this.path)
                 const outerArr = findArrOfArr(arr, this.files)
@@ -200,9 +179,7 @@ export default {
                 } else {
                     outerArr.splice(outerArr.indexOf(arr), 1)
                 }
-                deleteFolderRecursively(this.path).then(() => {
-                    deleteFolder(this.path)
-                })
+                shell.moveItemToTrash(this.path)
             })
         },
         //新增文件夹
@@ -216,7 +193,7 @@ export default {
                 }
                 const dir = {
                     name: '',
-                    path: `${this.path}\\`,
+                    path: `${this.path}${Path.sep}`,
                     type: 'dir',
                     isEdit: true,
                     isNewBuilt: true,
@@ -224,6 +201,12 @@ export default {
                 arr.push([dir])
                 this.$store.commit('setDir', dir)
                 this.$store.commit('setChosen', dir)
+            })
+        },
+        //在文件资源管理器打开
+        showItemInFolder() {
+            this.$refs.showItemInFolder.addEventListener('click', () => {
+                shell.showItemInFolder(this.path)
             })
         },
     },
