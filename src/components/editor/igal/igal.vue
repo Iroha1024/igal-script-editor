@@ -28,8 +28,8 @@ import echartButton from '@/components/button/echart-button'
 import LinkedSequence from './LinkedSequence/'
 import unlinkedSequence from './unlinkedSequence/'
 
-import readIgalSync, { extraOperate } from '@/utils/readIgal'
-import saveIgal from '@/utils/saveIgal'
+import readIgalSync, { extraOperate } from '@/utils/igal/readIgal'
+import saveIgal from '@/utils/igal/saveIgal'
 
 export default {
     data() {

@@ -1,7 +1,7 @@
 import { promises } from 'fs'
 import { EOL } from 'os'
 
-import Mark, { Type } from './mark'
+import Mark, { Type } from '../sequence/mark'
 
 /**
  * 保存

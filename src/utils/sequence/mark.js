@@ -1,5 +1,5 @@
 /**
- * igal标识符
+ * 行首标识符
  */
 const Mark = {
     start: '^',

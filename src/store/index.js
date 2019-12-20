@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 
-import { readAllSequences } from '@/utils/readIgal'
+import { readAllSequences } from '@/utils/igal/readIgal'
 
 Vue.use(Vuex)
 

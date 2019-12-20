@@ -4,7 +4,7 @@ import Path from 'path'
 
 import { mapState } from 'vuex'
 
-import writeIgal from '@/utils/writeIgal'
+import createIgal from '@/utils/igal/createIgal'
 import { findArrOfDir } from '@/utils/findOrigin'
 import toggleDirShow from '@/utils/toggleDirShow'
 
@@ -105,7 +105,7 @@ export default {
             await this.operate(file, true, async () => {
                 const exname = Path.extname(file.path)
                 if (exname === '.igal') {
-                    await writeIgal(this.configPath, file.path)
+                    await createIgal(this.configPath, file.path)
                     file.isNewBuilt = false
                     this.$router.push({
                         path: `/file/${file.path}`,

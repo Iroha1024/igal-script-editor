@@ -16,7 +16,7 @@ import { mapState } from 'vuex'
 
 import dir from '../fileManage/dir'
 
-import { readDir } from '@/utils/readIgal'
+import { readDir } from '@/utils/igal/readIgal'
 
 export default {
     computed: {

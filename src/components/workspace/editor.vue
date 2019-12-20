@@ -6,7 +6,6 @@
 
 <script>
 import path from 'path'
-import fs from 'fs'
 
 import Mousetrap from 'mousetrap'
 

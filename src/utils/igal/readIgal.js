@@ -2,7 +2,7 @@ import fs, { promises } from 'fs'
 import Path from 'path'
 import { EOL } from 'os'
 
-import Mark, { Type } from './mark'
+import Mark, { Type } from '../sequence/mark'
 
 /**
  * next是否为空
