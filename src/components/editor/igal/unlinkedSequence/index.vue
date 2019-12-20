@@ -27,6 +27,7 @@ export default {
 .title {
     border-radius: 10px 10px 0 0;
     padding: 0 $sequence-padding;
+    font-size: 20px;
     background-color: #fc7171;
 }
 </style>

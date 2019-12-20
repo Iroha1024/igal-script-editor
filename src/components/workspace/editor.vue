@@ -7,10 +7,9 @@
 <script>
 import path from 'path'
 
-import Mousetrap from 'mousetrap'
-
 import igal from '@/components/editor/igal/igal'
 import Type from '@/utils/shortcutKey'
+import Mousetrap from '@/utils/Mousetrap'
 
 export default {
     data() {
@@ -44,10 +43,6 @@ export default {
             // console.log(this.path, this.content);
         },
         bindKeyEvent() {
-            //覆盖停止回调
-            Mousetrap.prototype.stopCallback = function(e, element, combo) {
-                return false
-            }
             this.$nextTick(() => {
                 const fileDOM = this.$refs['file'] && this.$refs['file'].$el
                 if (fileDOM) {

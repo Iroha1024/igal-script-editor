@@ -23,6 +23,8 @@
 <script>
 import fs from 'fs'
 
+import { mapState } from 'vuex'
+
 import compositionMap from './echarts/compositionMap'
 import echartButton from '@/components/button/echart-button'
 import LinkedSequence from './LinkedSequence/'
@@ -30,6 +32,9 @@ import unlinkedSequence from './unlinkedSequence/'
 
 import readIgalSync, { extraOperate } from '@/utils/igal/readIgal'
 import saveIgal from '@/utils/igal/saveIgal'
+import Type from '@/utils/shortcutKey'
+import createSequence from '@/utils/sequence/createSequence'
+import Mousetrap from '@/utils/Mousetrap'
 
 export default {
     data() {
@@ -43,6 +48,9 @@ export default {
             },
             showEcharts: false,
         }
+    },
+    computed: {
+        ...mapState(['configPath']),
     },
     props: {
         path: String,
@@ -63,13 +71,18 @@ export default {
         readIgalSync(this.path, this.list, this.$store.state.configPath)
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
     },
+    mounted() {
+        this.bindKeyEvent()
+    },
     methods: {
-        save() {
+        //保存文件后，更新uuids
+        async save() {
             this.updateData()
             console.log(this.list)
-            // saveIgal(this.list, this.path)
+            await saveIgal(this.list, this.path)
+            this.$store.dispatch('updateUuids')
         },
-        //save前更新状态
+        //更新状态
         updateData() {
             this.clearRank()
             this.linked = []
@@ -93,6 +106,19 @@ export default {
                 return `${title} --> ${uuid}`
             }
             return uuid
+        },
+        //按键绑定
+        bindKeyEvent() {
+            Mousetrap(this.$refs['igal']).bind(Type.insertSequence, event => {
+                event.preventDefault()
+                this.insertSequence()
+            })
+        },
+        //shift+insert插入新的序列
+        async insertSequence() {
+            const sequence = await createSequence(this.configPath)
+            this.list.push(sequence)
+            this.updateData()
         },
     },
 }

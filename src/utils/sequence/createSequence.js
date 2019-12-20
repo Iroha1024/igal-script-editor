@@ -10,18 +10,19 @@ const uuid = uuidv1()
  */
 export default async function createSequence(setting) {
     const json = await readJson(setting)
-    const { customized } = json
-    const [title, description] = customized
+    const customized = {}
+    for (const key of json.customized) {
+        customized[key] = ''
+    }
     return {
-        customized: {
-            [title]: '',
-            [description]: '',
-        },
+        active: false,
+        customized,
         data: [
             {
                 type: 'linebreak',
             },
         ],
+        prev: [],
         next: [],
         uuid,
     }
