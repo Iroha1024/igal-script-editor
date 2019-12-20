@@ -1,4 +1,4 @@
-import fs from 'fs'
+import { promises } from 'fs'
 import { EOL } from 'os'
 
 import Mark, { Type } from './mark'
@@ -8,7 +8,7 @@ import Mark, { Type } from './mark'
  * @param {Array} igal 序列数组
  * @param {string} path 文件地址
  */
-export default function saveIgal(igal, path) {
+export default async function saveIgal(igal, path) {
     let data = igal.map(sequence => {
         const uuid = `${Mark.start}uuid ${sequence.uuid}|`
         const customized = Object.entries(sequence.customized)
@@ -37,10 +37,5 @@ export default function saveIgal(igal, path) {
     })
     data = data.join(EOL)
     // console.log(data);
-    return new Promise((resolve, reject) => {
-        fs.writeFile(path, data, err => {
-            if (err) return reject()
-            resolve()
-        })
-    })
+    await promises.writeFile(path, data)
 }

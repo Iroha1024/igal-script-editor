@@ -1,4 +1,4 @@
-import fs from 'fs'
+import fs, { promises } from 'fs'
 import Path from 'path'
 import { EOL } from 'os'
 
@@ -51,14 +51,9 @@ export default function readIgalSync(path, igal, setting) {
  * 读取json
  * @param {string} setting setting.json路径
  */
-export function readJson(setting) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(setting, 'utf-8', (err, json) => {
-            if (err) return reject()
-            json = JSON.parse(json)
-            resolve(json)
-        })
-    })
+export async function readJson(setting) {
+    const json = await promises.readFile(setting, 'utf-8')
+    return JSON.parse(json)
 }
 
 /**
@@ -68,16 +63,8 @@ export function readJson(setting) {
  * @returns {Promise<Array>}
  */
 export async function readIgal(path, setting) {
-    const readFile = function() {
-        return new Promise((resolve, reject) => {
-            fs.readFile(path, 'utf-8', (err, file) => {
-                if (err) return reject()
-                resolve(file)
-            })
-        })
-    }
     let igal = []
-    const file = await readFile()
+    const file = await promises.readFile(path, 'utf-8')
     const json = await readJson(setting)
     extractContent(file, json, igal)
     return igal
@@ -88,13 +75,9 @@ export async function readIgal(path, setting) {
  * @param {string} path 文件夹路径
  * @returns {Promise<fs.Dirent[]>}
  */
-export function readDir(path) {
-    return new Promise((resolve, reject) => {
-        fs.readdir(path, { withFileTypes: true }, (err, files) => {
-            if (err) return reject()
-            resolve(files)
-        })
-    })
+export async function readDir(path) {
+    const files = await promises.readdir(path, { withFileTypes: true })
+    return files
 }
 
 /**

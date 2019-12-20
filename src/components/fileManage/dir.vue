@@ -1,5 +1,5 @@
 <script>
-import fs from 'fs'
+import fs, { promises } from 'fs'
 import Path from 'path'
 
 import { mapState } from 'vuex'
@@ -60,7 +60,7 @@ export default {
          * @param {boolean} isAddSuffix 是否添加后缀
          * @param {Function} callback 后续执行函数
          */
-        operate(info, isAddSuffix, callback) {
+        async operate(info, isAddSuffix, callback) {
             if (!info) return
             info.isEdit = false
             if (this.value) {
@@ -78,7 +78,7 @@ export default {
                     }
                     info.oldPath = info.path
                     info.name = Path.basename(info.path)
-                    callback()
+                    await callback()
                 } else {
                     //重命名，先将path改为上级路径
                     const upperPath = Path.dirname(info.path)
@@ -94,24 +94,21 @@ export default {
                     }
                     info.path = newPath
                     info.name = Path.basename(info.path)
-                    fs.rename(info.oldPath, info.path, err => {
-                        if (err) throw err
-                        info.oldPath = info.path
-                    })
+                    await promises.rename(info.oldPath, info.path)
+                    info.oldPath = info.path
                 }
             } else if (info.isNewBuilt) {
                 this.$store.commit('deleteIncompletefile', info)
             }
         },
-        operateFile(file) {
-            this.operate(file, true, () => {
+        async operateFile(file) {
+            await this.operate(file, true, async () => {
                 const exname = Path.extname(file.path)
                 if (exname === '.igal') {
-                    writeIgal(this.configPath, file.path).then(() => {
-                        file.isNewBuilt = false
-                        this.$router.push({
-                            path: `/file/${file.path}`,
-                        })
+                    await writeIgal(this.configPath, file.path)
+                    file.isNewBuilt = false
+                    this.$router.push({
+                        path: `/file/${file.path}`,
                     })
                 }
                 if (exname === '.json') {
@@ -119,20 +116,19 @@ export default {
                         head: '1',
                         customized: ['title', 'description'],
                     }
-                    fs.writeFile(file.path, JSON.stringify(json), err => {})
+                    await promises.writeFile(file.path, JSON.stringify(json))
                 }
             })
         },
-        operateDir(dir) {
-            this.operate(dir, false, () => {
-                fs.mkdir(dir.path, () => {
-                    dir.isNewBuilt = false
-                })
+        async operateDir(dir) {
+            await this.operate(dir, false, async () => {
+                await promises.mkdir(dir.path)
+                dir.isNewBuilt = false
             })
         },
         //点击控制文件编辑状态
         clickControl() {
-            const click = event => {
+            const click = async event => {
                 //不会自动消除的区域id
                 const noEffectId = [
                     'input',
@@ -141,16 +137,16 @@ export default {
                     'createDir',
                 ]
                 if (!noEffectId.includes(event.target.id)) {
-                    this.operateFile(this.file)
+                    await this.operateFile(this.file)
                     this.$store.commit('setFile', null)
-                    this.operateDir(this.dir)
+                    await this.operateDir(this.dir)
                     this.$store.commit('setDir', null)
                 }
             }
-            const rightClick = () => {
-                this.operateFile(this.file)
+            const rightClick = async () => {
+                await this.operateFile(this.file)
                 this.$store.commit('setFile', null)
-                this.operateDir(this.dir)
+                await this.operateDir(this.dir)
                 this.$store.commit('setDir', null)
             }
             //左键单击其他区域

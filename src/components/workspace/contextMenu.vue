@@ -50,7 +50,6 @@ import Path from 'path'
 import { ipcRenderer, shell } from 'electron'
 import { mapState } from 'vuex'
 
-import { readDir } from '@/utils/readIgal'
 import { findArrOfDir, findFileByPath, findArrOfArr } from '@/utils/findOrigin'
 import toggleDirShow from '@/utils/toggleDirShow'
 
