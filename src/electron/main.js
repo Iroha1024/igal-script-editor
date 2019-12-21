@@ -12,3 +12,4 @@ ipcMain.on('open-directory-dialog', event => {
 })
 
 export { menu } from './menu'
+export * from './config.js'

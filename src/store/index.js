@@ -9,8 +9,10 @@ const store = new Vuex.Store({
     state: {
         //项目文件夹路径
         dirPath: '',
-        //项目配置文件路径
+        //项目配置文件路径setting.json
         configPath: '',
+        //程序配置数据
+        configData: null,
         //项目下所有文件及文件夹
         files: [],
         //当前操作的文件
@@ -28,6 +30,9 @@ const store = new Vuex.Store({
         },
         setConfigPath(state, path) {
             state.configPath = path
+        },
+        setConfigData(state, configData) {
+            state.configData = configData
         },
         setFiles(state, files) {
             state.files = files

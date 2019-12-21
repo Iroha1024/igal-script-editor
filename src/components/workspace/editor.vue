@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import path from 'path'
+import Path from 'path'
 
 import igal from '@/components/editor/igal/igal'
 import Type from '@/utils/shortcutKey'
@@ -32,7 +32,7 @@ export default {
     methods: {
         //打开对应格式组件
         open() {
-            const fileType = path.extname(this.path)
+            const fileType = Path.extname(this.path)
             switch (fileType) {
                 case '.igal':
                     this.fileType = 'igal'

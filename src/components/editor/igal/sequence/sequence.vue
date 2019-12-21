@@ -1,5 +1,5 @@
 <template>
-    <div class="sequence">
+    <div class="sequence" @click="click">
         <header>
             <div
                 class="customized-info"
@@ -7,8 +7,10 @@
                     sequence.customized
                 )"
             >
-                <div class="key" contenteditable="false">{{ key }}</div>
-                <div class="value">{{ value }}</div>
+                <div class="customized-info--key" contenteditable="false">
+                    {{ key }}
+                </div>
+                <div class="customized-info--value">{{ value }}</div>
             </div>
         </header>
         <main>
@@ -21,26 +23,25 @@
         </main>
         <footer contenteditable="false">
             <div
-                class="next"
+                class="next-button"
                 :class="{ 'bg-color': isShowUuidOfNext }"
                 v-for="(uuid, index) of sequence.next"
                 :key="index"
             >
-                <div class="text" :class="{ 'show-text': isShowUuidOfNext }">
+                <div
+                    class="uuid-text"
+                    :class="{ 'show-text': isShowUuidOfNext }"
+                >
                     {{ uuid }}
                 </div>
                 <delete-button
-                    class="text--delete"
+                    class="uuid-text--delete"
                     @click.native="removeSequence(index)"
                 ></delete-button>
             </div>
-            <div class="next">
-                <input
-                    class="search"
-                    type="text"
-                    @input="search($event.target)"
-                />
-                <ul class="list list-hover">
+            <div class="next-button">
+                <input class="search" type="text" v-model="input" />
+                <ul class="uuid-list list--hover">
                     <li
                         v-for="(uuid, index) of next"
                         v-show="isShowList(uuid)"
@@ -60,7 +61,7 @@
                         <template v-else>{{ uuid }}</template>
                     </li>
                 </ul>
-                <add-button class="list--add"></add-button>
+                <add-button class="uuid-list--add"></add-button>
             </div>
             <div
                 class="show-next iconfont"
@@ -113,9 +114,9 @@ export default {
     },
     inject: ['save', 'list'],
     methods: {
-        //----------------------------------------main----------------------------------------
-
-        //----------------------------------------footer----------------------------------------
+        click() {
+            console.log(window.getSelection().focusNode)
+        },
         //删除序列后，保存
         removeSequence(index) {
             this.sequence.next.splice(index, 1)
@@ -124,17 +125,14 @@ export default {
         //新增序列后，保存
         linkToSequence(node, uuid) {
             if (node.nodeName === 'DEL') return
-            node.parentNode.classList.remove('list-hover')
+            node.parentNode.classList.remove('list--hover')
             setTimeout(() => {
-                node.parentNode.classList.add('list-hover')
+                node.parentNode.classList.add('list--hover')
             }, 1500)
             if (!this.sequence.next.includes(uuid)) {
                 this.sequence.next.push(uuid)
                 this.save()
             }
-        },
-        search(input) {
-            this.input = input.value
         },
         //展示查询内容
         isShowList(uuid) {
@@ -166,13 +164,13 @@ export default {
         .customized-info {
             display: flex;
             align-items: center;
-            line-height: 40px;
-            .key {
+            .customized-info--key {
                 flex: 0 0 20%;
                 user-select: none;
             }
-            .value {
+            .customized-info--value {
                 flex: 1;
+                min-height: var(--line-height);
             }
         }
     }
@@ -191,7 +189,7 @@ export default {
             margin-top: $button-size / 2;
             cursor: pointer;
         }
-        .next {
+        .next-button {
             display: flex;
             position: relative;
             min-width: $button-size;
@@ -200,13 +198,13 @@ export default {
             border-radius: $button-size / 2;
             background-color: $nomral-button-color;
             @include anime;
-            .text {
+            .uuid-text {
                 max-width: 0;
                 height: inherit;
                 overflow: hidden;
                 @include anime;
             }
-            .text--delete {
+            .uuid-text--delete {
                 @include button($delete-color);
             }
             .search {
@@ -218,7 +216,7 @@ export default {
                 outline: none;
                 @include anime;
             }
-            .list {
+            .uuid-list {
                 position: absolute;
                 top: $button-size;
                 min-width: 200px;
@@ -256,7 +254,7 @@ export default {
                     border-top: 1px solid;
                 }
             }
-            .list--add {
+            .uuid-list--add {
                 max-width: $button-size;
                 overflow: hidden;
                 @include anime;
@@ -264,7 +262,7 @@ export default {
             }
             &:hover {
                 background-color: $text-bg-color;
-                .text {
+                .uuid-text {
                     max-width: 200px;
                     padding: 0 $button-size / 2;
                 }
@@ -274,11 +272,11 @@ export default {
                     font-size: 25px;
                     background-color: $text-bg-color;
                 }
-                .list-hover {
+                .list--hover {
                     max-height: 120px;
                     overflow: hidden scroll;
                 }
-                .list--add {
+                .uuid-list--add {
                     max-width: 0;
                 }
             }
@@ -293,6 +291,7 @@ export default {
         .show-next {
             width: $button-size;
             height: $button-size;
+            line-height: $button-size;
             font-size: 28px;
         }
     }

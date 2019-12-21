@@ -77,7 +77,6 @@ export default {
 .tabs {
     .tab__nav {
         display: flex;
-        font-size: 20px;
         user-select: none;
         .tab {
             flex: 1;

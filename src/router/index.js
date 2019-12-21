@@ -18,6 +18,11 @@ const routes = [
         ],
     },
     {
+        path: '/config',
+        name: 'config',
+        component: () => import('@/views/config'),
+    },
+    {
         path: '*',
         redirect: '/',
     },

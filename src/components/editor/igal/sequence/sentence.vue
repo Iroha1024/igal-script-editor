@@ -2,10 +2,14 @@
     <div class="sentence">
         <div class="name">{{ info.name }}</div>
         <div class="text">
-            <p v-for="(item, index) of info.text" :key="index">{{ item }}</p>
+            <div v-for="(item, index) of info.text" :key="index">
+                {{ item }}
+            </div>
         </div>
         <div class="remark">
-            <p v-for="(item, index) of info.remark" :key="index">{{ item }}</p>
+            <div v-for="(item, index) of info.remark" :key="index">
+                {{ item }}
+            </div>
         </div>
     </div>
 </template>
@@ -26,6 +30,9 @@ export default {
     }
     .text {
         flex: 0 0 40%;
+    }
+    .remark {
+        flex: 1;
     }
 }
 </style>
