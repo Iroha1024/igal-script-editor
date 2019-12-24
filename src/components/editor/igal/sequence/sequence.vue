@@ -1,17 +1,14 @@
 <template>
-    <div class="sequence" @click="click">
+    <div
+        class="sequence"
+        contenteditable="true"
+        @click="getTarget($event)"
+        @keydown="keydown($event)"
+    >
         <header>
-            <div
-                class="customized-info"
-                v-for="([key, value], index) of Object.entries(
-                    sequence.customized
-                )"
-            >
-                <div class="customized-info--key" contenteditable="false">
-                    {{ key }}
-                </div>
-                <div class="customized-info--value">{{ value }}</div>
-            </div>
+            <customized-info
+                :customized="sequence.customized"
+            ></customized-info>
         </header>
         <main>
             <component
@@ -21,134 +18,87 @@
                 :info="item"
             ></component>
         </main>
-        <footer contenteditable="false">
-            <div
-                class="next-button"
-                :class="{ 'bg-color': isShowUuidOfNext }"
-                v-for="(uuid, index) of sequence.next"
-                :key="index"
-            >
-                <div
-                    class="uuid-text"
-                    :class="{ 'show-text': isShowUuidOfNext }"
-                >
-                    {{ uuid }}
-                </div>
-                <delete-button
-                    class="uuid-text--delete"
-                    @click.native="removeSequence(index)"
-                ></delete-button>
-            </div>
-            <div class="next-button">
-                <input class="search" type="text" v-model="input" />
-                <ul class="uuid-list list--hover">
-                    <li
-                        v-for="(uuid, index) of next"
-                        v-show="isShowList(uuid)"
-                        :class="{
-                            existed: isExisted(uuid),
-                            outside: isOutside(uuid),
-                        }"
-                        :key="index"
-                        @click="linkToSequence($event.target, uuid)"
-                    >
-                        <template v-if="isExisted(uuid)">
-                            <del>{{ uuid }}</del>
-                        </template>
-                        <template v-else-if="isOutside(uuid)">{{
-                            uuid
-                        }}</template>
-                        <template v-else>{{ uuid }}</template>
-                    </li>
-                </ul>
-                <add-button class="uuid-list--add"></add-button>
-            </div>
-            <div
-                class="show-next iconfont"
-                :class="[
-                    isShowUuidOfNext ? 'icon-xianshi' : 'icon-icon-eye-close',
-                ]"
-                @click="toggleShowNext()"
-            ></div>
+        <footer>
+            <button-area :sequence="sequence"></button-area>
         </footer>
     </div>
 </template>
 
 <script>
-import { mapState } from 'vuex'
-
-import addButton from '@/components/button/add-button'
-import deleteButton from '@/components/button/delete-button'
-import sentence from './sentence'
-import linebreak from './linebreak'
-import branch from './branch'
+import customizedInfo from './header/customizedInfo'
+import sentence from './main/sentence'
+import linebreak from './main/linebreak'
+import branch from './main/branch'
+import buttonArea from './footer/buttonArea'
 
 export default {
     props: {
         sequence: Object,
     },
     components: {
-        addButton,
-        deleteButton,
+        customizedInfo,
         sentence,
         linebreak,
         branch,
+        buttonArea,
     },
     data() {
         return {
-            //搜索uuid
-            input: '',
-            //是否展示next内uuid
-            isShowUuidOfNext: false,
+            //点击处数据
+            selection: {
+                //sequence原数据
+                target: null,
+                key: null,
+                //若为数组，则存在index值
+                index: null,
+                //当前值
+                value: null,
+                //光标所在偏移
+                offset: null,
+            },
         }
     },
-    computed: {
-        ...mapState(['uuids']),
-        next() {
-            return this.uuids.filter(
-                uuid =>
-                    !this.sequence.prev.includes(uuid) &&
-                    uuid !== this.sequence.uuid
-            )
-        },
-    },
-    inject: ['save', 'list'],
+    inject: ['list'],
     methods: {
-        click() {
-            console.log(window.getSelection().focusNode)
-        },
-        //删除序列后，保存
-        removeSequence(index) {
-            this.sequence.next.splice(index, 1)
-            this.save()
-        },
-        //新增序列后，保存
-        linkToSequence(node, uuid) {
-            if (node.nodeName === 'DEL') return
-            node.parentNode.classList.remove('list--hover')
-            setTimeout(() => {
-                node.parentNode.classList.add('list--hover')
-            }, 1500)
-            if (!this.sequence.next.includes(uuid)) {
-                this.sequence.next.push(uuid)
-                this.save()
+        getTarget(event) {
+            let node = event.target
+            let index, key, target
+            try {
+                while (node && !node.Target) {
+                    if (node.Index !== null && node.Index !== undefined) {
+                        index = node.Index
+                    }
+                    if (node.Key) {
+                        key = node.Key
+                    }
+                    node = node.parentNode
+                }
+                target = node.Target
+            } catch (error) {
+                //footer区域报错退出
+                return
             }
+            //customized-info--key区域退出
+            if (target.type !== 'linebreak' && !key) return
+            this.selection = {
+                target: null,
+                key: null,
+                index: null,
+                value: null,
+            }
+            this.selection.index = index
+            this.selection.key = key
+            this.selection.target = target
+            const selection = window.getSelection()
+            this.selection.offset = selection.focusOffset
+            if (key) {
+                this.selection.value = target[key][index] || target[key]
+            }
+            console.log(this.selection)
         },
-        //展示查询内容
-        isShowList(uuid) {
-            if (this.input === '') return true
-            return uuid.startsWith(this.input)
-        },
-        toggleShowNext() {
-            this.isShowUuidOfNext = !this.isShowUuidOfNext
-        },
-        //已经连接序列
-        isExisted(uuid) {
-            return this.sequence.next.includes(uuid)
-        },
-        //不属于当前igal文件中的序列
-        isOutside(uuid) {
-            return !this.list.map(sequence => sequence.uuid).includes(uuid)
+        keydown(event) {
+            const value = event.key
+            console.log(this.list)
         },
     },
 }
@@ -160,140 +110,6 @@ export default {
     border-radius: 0 0 10px 10px;
     padding: $sequence-padding;
     margin-bottom: 20px;
-    header {
-        .customized-info {
-            display: flex;
-            align-items: center;
-            .customized-info--key {
-                flex: 0 0 20%;
-                user-select: none;
-            }
-            .customized-info--value {
-                flex: 1;
-                min-height: var(--line-height);
-            }
-        }
-    }
-    footer {
-        $text-bg-color: #fff;
-        $forbidden-bg-color: #fc7171;
-        $delete-color: #e65454;
-        @mixin anime() {
-            transition: all 1s ease;
-        }
-        display: flex;
-        flex-wrap: wrap;
-        user-select: none;
-        & > * {
-            margin-right: $button-size / 2;
-            margin-top: $button-size / 2;
-            cursor: pointer;
-        }
-        .next-button {
-            display: flex;
-            position: relative;
-            min-width: $button-size;
-            height: $button-size;
-            line-height: $button-size;
-            border-radius: $button-size / 2;
-            background-color: $nomral-button-color;
-            @include anime;
-            .uuid-text {
-                max-width: 0;
-                height: inherit;
-                overflow: hidden;
-                @include anime;
-            }
-            .uuid-text--delete {
-                @include button($delete-color);
-            }
-            .search {
-                max-width: 0;
-                height: inherit;
-                overflow: hidden;
-                border-radius: 10px;
-                border: 0;
-                outline: none;
-                @include anime;
-            }
-            .uuid-list {
-                position: absolute;
-                top: $button-size;
-                min-width: 200px;
-                max-width: 300px;
-                max-height: 0;
-                overflow: hidden;
-                border-radius: $button-size / 2;
-                background-color: $list-bg-color;
-                @include anime;
-                li {
-                    white-space: nowrap;
-                    text-align: center;
-                    font-size: 20px;
-                    padding: 0 10px;
-                    overflow: hidden;
-                    &:hover {
-                        background-color: $list-hover-color;
-                    }
-                }
-                .existed {
-                    background-color: $forbidden-bg-color;
-                    cursor: no-drop;
-                    &:hover {
-                        background-color: $forbidden-bg-color;
-                    }
-                }
-                .outside {
-                    background-color: #e4e148;
-                    cursor: wait;
-                    &:hover {
-                        background-color: #f8f691;
-                    }
-                }
-                & > li + li {
-                    border-top: 1px solid;
-                }
-            }
-            .uuid-list--add {
-                max-width: $button-size;
-                overflow: hidden;
-                @include anime;
-                @include button;
-            }
-            &:hover {
-                background-color: $text-bg-color;
-                .uuid-text {
-                    max-width: 200px;
-                    padding: 0 $button-size / 2;
-                }
-                .search {
-                    max-width: 200px;
-                    padding: 0 $button-size / 2;
-                    font-size: 25px;
-                    background-color: $text-bg-color;
-                }
-                .list--hover {
-                    max-height: 120px;
-                    overflow: hidden scroll;
-                }
-                .uuid-list--add {
-                    max-width: 0;
-                }
-            }
-            .show-text {
-                max-width: 200px;
-                padding: 0 $button-size / 2;
-            }
-        }
-        .bg-color {
-            background-color: $text-bg-color;
-        }
-        .show-next {
-            width: $button-size;
-            height: $button-size;
-            line-height: $button-size;
-            font-size: 28px;
-        }
-    }
+    outline: none;
 }
 </style>

@@ -2,7 +2,7 @@
     <div class="linked-sequence">
         <div v-for="(rankList, rank) of linked" :key="rank">
             <div class="tabs">
-                <div class="tab__nav" contenteditable="false">
+                <div class="tab__nav">
                     <div
                         class="tab"
                         :class="{

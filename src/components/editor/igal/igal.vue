@@ -1,5 +1,5 @@
 <template>
-    <div class="igal" ref="igal" contenteditable="true">
+    <div class="igal" ref="igal">
         <composition-map
             :echarts="echarts"
             v-show="showEcharts"
@@ -7,7 +7,6 @@
         <echart-button
             class="show"
             @click.native="showEcharts = !showEcharts"
-            contenteditable="false"
         ></echart-button>
         <linked-sequence
             :linked="linked"
@@ -133,7 +132,6 @@ export default {
     padding: 20px;
     line-height: 1.4;
     word-break: break-all;
-    outline: none;
     box-sizing: border-box;
     .show {
         z-index: 101;
