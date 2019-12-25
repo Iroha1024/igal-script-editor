@@ -2,7 +2,7 @@
     <div
         class="sequence"
         contenteditable="true"
-        @click="getTarget($event)"
+        @click="getTarget($event.target)"
         @keydown="keydown($event)"
     >
         <header>
@@ -51,17 +51,13 @@ export default {
                 key: null,
                 //若为数组，则存在index值
                 index: null,
-                //当前值
-                value: null,
                 //光标所在偏移
                 offset: null,
             },
         }
     },
-    inject: ['list'],
     methods: {
-        getTarget(event) {
-            let node = event.target
+        getTarget(node) {
             let index, key, target
             try {
                 while (node && !node.Target) {
@@ -84,21 +80,83 @@ export default {
                 target: null,
                 key: null,
                 index: null,
-                value: null,
+                offset: null,
             }
             this.selection.index = index
             this.selection.key = key
             this.selection.target = target
             const selection = window.getSelection()
             this.selection.offset = selection.focusOffset
-            if (key) {
-                this.selection.value = target[key][index] || target[key]
-            }
             console.log(this.selection)
         },
         keydown(event) {
-            const value = event.key
-            console.log(this.list)
+            //上下左右，调整光标所在node
+            function isDirectionKey(key) {
+                return [
+                    'ArrowUp',
+                    'ArrowDown',
+                    'ArrowLeft',
+                    'ArrowRight',
+                ].includes(key)
+            }
+            function isSingleKey(key) {
+                return key.length === 1
+            }
+            function isCommand(event) {
+                return event.altKey || event.ctrlKey
+            }
+            function insertKey(str, key, offset) {
+                return str.slice(0, offset) + key + str.slice(offset)
+            }
+            function isBackspace(key) {
+                return key === 'Backspace'
+            }
+            switch (true) {
+                case isDirectionKey(event.key):
+                    setTimeout(() => {
+                        const node = window.getSelection().focusNode
+                        this.getTarget(node)
+                        console.log(this.selection)
+                    }, 0)
+                    break
+                case isSingleKey(event.key) && !isCommand(event):
+                    const key = event.key
+                    const selection = this.selection
+                    const value =
+                        selection.target[selection.key][selection.index] ||
+                        selection.target[selection.key]
+                    if (
+                        selection.index !== null &&
+                        selection.index !== undefined
+                    ) {
+                        this.$set(
+                            selection.target[selection.key],
+                            selection.index,
+                            insertKey(value, key, selection.offset)
+                        )
+                    } else {
+                        selection.target[selection.key] = insertKey(
+                            value,
+                            key,
+                            selection.offset
+                        )
+                    }
+                    event.preventDefault()
+                    setTimeout(() => {
+                        const selection = window.getSelection()
+                        let node = selection.focusNode
+                        if (node.firstChild) {
+                            node = node.firstChild
+                        }
+                        const range = selection.getRangeAt(0)
+                        range.setStart(node, ++this.selection.offset)
+                        // console.log(this.selection);
+                    }, 0)
+                    break
+                case isBackspace(event.key):
+                    event.preventDefault()
+                    break
+            }
         },
     },
 }
