@@ -10,7 +10,7 @@
                 :customized="sequence.customized"
             ></customized-info>
         </header>
-        <main>
+        <main ref="main">
             <component
                 :is="item.type"
                 v-for="(item, index) of sequence.data"
@@ -31,6 +31,8 @@ import linebreak from './main/linebreak'
 import branch from './main/branch'
 import buttonArea from './footer/buttonArea'
 
+import { Type } from '@/utils/sequence/mark.js'
+
 export default {
     props: {
         sequence: Object,
@@ -45,9 +47,10 @@ export default {
     data() {
         return {
             //点击处数据
-            selection: {
+            cursorPoint: {
                 //sequence原数据
                 target: null,
+                //键值
                 key: null,
                 //若为数组，则存在index值
                 index: null,
@@ -77,21 +80,21 @@ export default {
                 return
             }
             //customized-info--key区域退出
-            if (target.type !== 'linebreak' && !key) return
-            this.selection = {
+            if (target.type !== Type.linebreak && !key) return
+            this.cursorPoint = {
                 target: null,
                 key: null,
                 index: null,
                 focusOffset: null,
                 anchorOffset: null,
             }
-            this.selection.index = index
-            this.selection.key = key
-            this.selection.target = target
+            this.cursorPoint.index = index
+            this.cursorPoint.key = key
+            this.cursorPoint.target = target
             const selection = window.getSelection()
-            this.selection.focusOffset = selection.focusOffset
-            this.selection.anchorOffset = selection.anchorOffset
-            console.log(this.selection, selection)
+            this.cursorPoint.focusOffset = selection.focusOffset
+            this.cursorPoint.anchorOffset = selection.anchorOffset
+            console.log(this.cursorPoint)
         },
         keydown(event) {
             //上下左右，调整光标所在node
@@ -137,9 +140,9 @@ export default {
             }
             /**
              * 为sequence.data赋值
-             * @param {object} selection 拖蓝区域
-             * @param {string} str 插入值
+             * @param {object} cursorPoint 鼠标（拖蓝）区域
              * @param {string} value 所在文本节点值
+             * @param {string} str 插入值
              */
             const changeState = (
                 { target, key, index, focusOffset, anchorOffset },
@@ -169,13 +172,14 @@ export default {
                 setTimeout(() => {
                     const selection = window.getSelection()
                     let node = selection.focusNode
+                    //空节点返回div.data node转为其文本节点
                     if (node.firstChild) {
                         node = node.firstChild
                     }
                     const range = selection.getRangeAt(0)
                     range.setStart(node, offset)
-                    this.selection.anchorOffset = offset
-                    this.selection.focusOffset = offset
+                    this.cursorPoint.anchorOffset = offset
+                    this.cursorPoint.focusOffset = offset
                 }, 0)
             }
             function isBackspace(key) {
@@ -211,41 +215,76 @@ export default {
                     }
                 }
             }
-            console.log(this.selection);
-            const selection = this.selection,
+            //当刷蓝区域不在同一节点上
+            const selection = window.getSelection()
+            if (selection.focusNode !== selection.anchorNode) {
+                event.preventDefault()
+                return
+            }
+            let cursorPoint, value
+            try {
+                cursorPoint = this.cursorPoint
                 value =
-                    selection.target[selection.key][selection.index] ||
-                    selection.target[selection.key]
+                    cursorPoint.target[cursorPoint.key][cursorPoint.index] ||
+                    cursorPoint.target[cursorPoint.key]
+            } catch {
+                //linebreak组件输入，转为sentence组件
+                event.preventDefault()
+                if (!isSingleKey(event.key) || isCommand(event)) return
+                const target = this.cursorPoint.target
+                const obj = {
+                    name: '',
+                    text: [event.key],
+                    remark: [''],
+                    type: Type.sentence,
+                }
+                this.sequence.data.splice(
+                    this.sequence.data.indexOf(target),
+                    1,
+                    obj
+                )
+                this.$nextTick(() => {
+                    const index = this.sequence.data.indexOf(obj)
+                    const sentence = this.$refs['main'].children[index]
+                    const node = sentence.children[1].firstChild.firstChild
+                    const selection = window.getSelection()
+                    selection.removeAllRanges()
+                    const range = document.createRange()
+                    range.setStart(node, 1)
+                    selection.addRange(range)
+                    this.getTarget(node)
+                })
+                return
+            }
             switch (true) {
                 //方向键
                 case isDirectionKey(event.key):
                     setTimeout(() => {
                         const node = window.getSelection().focusNode
                         this.getTarget(node)
-                        console.log(this.selection)
                     }, 0)
                     break
                 //输入当个字符，且非命令，e.g. ctrl+z
                 case isSingleKey(event.key) && !isCommand(event):
                     event.preventDefault()
                     const str = event.key
-                    changeState(selection, value, str)
+                    changeState(cursorPoint, value, str)
+                    console.log(event)
                     break
                 //删除字符
                 case isBackspace(event.key):
                     event.preventDefault()
-                    const sel = window.getSelection()
-                    //当刷蓝区域不在同一节点上，或在节点开头时，不能删除
+                    const selection = window.getSelection()
+                    //当刷蓝区域在节点开头时，不能删除
                     const canNotBeDelete =
-                        sel.anchorNode !== sel.focusNode ||
-                        (sel.isCollapsed && sel.focusOffset === 0)
+                        selection.isCollapsed && selection.focusOffset === 0
                     if (canNotBeDelete) return
-                    changeState(selection, value)
+                    changeState(cursorPoint, value)
                     break
-                default:
-                    // console.log(event)
-                    console.log(window.getSelection());
-                    break
+                // default:
+                //     console.log(event)
+                //     // console.log(window.getSelection());
+                //     break
             }
         },
     },
