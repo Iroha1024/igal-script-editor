@@ -23,5 +23,6 @@ export default {
 <style lang="scss" scoped>
 .data {
     min-height: var(--line-height);
+    white-space: pre-wrap;
 }
 </style>

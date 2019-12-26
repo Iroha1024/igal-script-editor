@@ -52,7 +52,9 @@ export default {
                 //若为数组，则存在index值
                 index: null,
                 //光标所在偏移
-                offset: null,
+                focusOffset: null,
+                //初始光标所在偏移
+                anchorOffset: null,
             },
         }
     },
@@ -80,14 +82,16 @@ export default {
                 target: null,
                 key: null,
                 index: null,
-                offset: null,
+                focusOffset: null,
+                anchorOffset: null,
             }
             this.selection.index = index
             this.selection.key = key
             this.selection.target = target
             const selection = window.getSelection()
-            this.selection.offset = selection.focusOffset
-            console.log(this.selection)
+            this.selection.focusOffset = selection.focusOffset
+            this.selection.anchorOffset = selection.anchorOffset
+            console.log(this.selection, selection)
         },
         keydown(event) {
             //上下左右，调整光标所在node
@@ -105,13 +109,115 @@ export default {
             function isCommand(event) {
                 return event.altKey || event.ctrlKey
             }
-            function insertKey(str, key, offset) {
-                return str.slice(0, offset) + key + str.slice(offset)
+            /**
+             * 获取插入后值
+             * @param {string} value 所在文本节点值
+             * @param {string} str 插入值
+             * @param {number} focusOffset 光标所在偏移
+             * @param {number} anchorOffset 初始光标所在偏移
+             */
+            function insertStr(value, str, focusOffset, anchorOffset) {
+                if (focusOffset <= anchorOffset) {
+                    return {
+                        result:
+                            value.slice(0, focusOffset) +
+                            str +
+                            value.slice(anchorOffset),
+                        offset: focusOffset + 1,
+                    }
+                } else {
+                    return {
+                        result:
+                            value.slice(0, anchorOffset) +
+                            str +
+                            value.slice(focusOffset),
+                        offset: anchorOffset + 1,
+                    }
+                }
+            }
+            /**
+             * 为sequence.data赋值
+             * @param {object} selection 拖蓝区域
+             * @param {string} str 插入值
+             * @param {string} value 所在文本节点值
+             */
+            const changeState = (
+                { target, key, index, focusOffset, anchorOffset },
+                value,
+                str
+            ) => {
+                let result, offset
+                if (str) {
+                    ;({ result, offset } = insertStr(
+                        value,
+                        str,
+                        focusOffset,
+                        anchorOffset
+                    ))
+                } else {
+                    ;({ result, offset } = deleteStr(
+                        value,
+                        focusOffset,
+                        anchorOffset
+                    ))
+                }
+                if (index !== null && index !== undefined) {
+                    this.$set(target[key], index, result)
+                } else {
+                    target[key] = result
+                }
+                setTimeout(() => {
+                    const selection = window.getSelection()
+                    let node = selection.focusNode
+                    if (node.firstChild) {
+                        node = node.firstChild
+                    }
+                    const range = selection.getRangeAt(0)
+                    range.setStart(node, offset)
+                    this.selection.anchorOffset = offset
+                    this.selection.focusOffset = offset
+                }, 0)
             }
             function isBackspace(key) {
                 return key === 'Backspace'
             }
+            /**
+             * 获取删除后值
+             * @param {string} value 所在文本节点值
+             * @param {number} focusOffset 光标所在偏移
+             * @param {number} anchorOffset 初始光标所在偏移
+             */
+            function deleteStr(value, focusOffset, anchorOffset) {
+                if (focusOffset < anchorOffset) {
+                    return {
+                        result:
+                            value.slice(0, focusOffset) +
+                            value.slice(anchorOffset),
+                        offset: focusOffset,
+                    }
+                } else if (focusOffset > anchorOffset) {
+                    return {
+                        result:
+                            value.slice(0, anchorOffset) +
+                            value.slice(focusOffset),
+                        offset: anchorOffset,
+                    }
+                } else {
+                    return {
+                        result:
+                            value.slice(0, focusOffset - 1) +
+                            value.slice(focusOffset),
+                        offset: focusOffset - 1,
+                    }
+                }
+            }
+            console.log(this.selection);
+            const selection = this.selection,
+                value =
+                    selection.target[selection.key][selection.index] ||
+                    selection.target[selection.key]
             switch (true) {
+                //方向键
                 case isDirectionKey(event.key):
                     setTimeout(() => {
                         const node = window.getSelection().focusNode
@@ -119,42 +225,26 @@ export default {
                         console.log(this.selection)
                     }, 0)
                     break
+                //输入当个字符，且非命令，e.g. ctrl+z
                 case isSingleKey(event.key) && !isCommand(event):
-                    const key = event.key
-                    const selection = this.selection
-                    const value =
-                        selection.target[selection.key][selection.index] ||
-                        selection.target[selection.key]
-                    if (
-                        selection.index !== null &&
-                        selection.index !== undefined
-                    ) {
-                        this.$set(
-                            selection.target[selection.key],
-                            selection.index,
-                            insertKey(value, key, selection.offset)
-                        )
-                    } else {
-                        selection.target[selection.key] = insertKey(
-                            value,
-                            key,
-                            selection.offset
-                        )
-                    }
                     event.preventDefault()
-                    setTimeout(() => {
-                        const selection = window.getSelection()
-                        let node = selection.focusNode
-                        if (node.firstChild) {
-                            node = node.firstChild
-                        }
-                        const range = selection.getRangeAt(0)
-                        range.setStart(node, ++this.selection.offset)
-                        // console.log(this.selection);
-                    }, 0)
+                    const str = event.key
+                    changeState(selection, value, str)
                     break
+                //删除字符
                 case isBackspace(event.key):
                     event.preventDefault()
+                    const sel = window.getSelection()
+                    //当刷蓝区域不在同一节点上，或在节点开头时，不能删除
+                    const canNotBeDelete =
+                        sel.anchorNode !== sel.focusNode ||
+                        (sel.isCollapsed && sel.focusOffset === 0)
+                    if (canNotBeDelete) return
+                    changeState(selection, value)
+                    break
+                default:
+                    // console.log(event)
+                    console.log(window.getSelection());
                     break
             }
         },
