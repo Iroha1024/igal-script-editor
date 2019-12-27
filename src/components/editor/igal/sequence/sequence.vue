@@ -1,10 +1,5 @@
 <template>
-    <div
-        class="sequence"
-        contenteditable="true"
-        @click="getTarget($event)"
-        @keydown="keydown($event)"
-    >
+    <div class="sequence" ref="sequence">
         <header>
             <customized-info
                 :customized="sequence.customized"
@@ -42,64 +37,17 @@ export default {
         branch,
         buttonArea,
     },
-    data() {
+    provide() {
         return {
-            //点击处数据
-            selection: {
-                //sequence原数据
-                target: null,
-                key: null,
-                //若为数组，则存在index值
-                index: null,
-                //当前值
-                value: null,
-                //光标所在偏移
-                offset: null,
-            },
+            sequence: this.sequence,
+            getNode: this.getNode,
         }
     },
-    inject: ['list'],
     methods: {
-        getTarget(event) {
-            let node = event.target
-            let index, key, target
-            try {
-                while (node && !node.Target) {
-                    if (node.Index !== null && node.Index !== undefined) {
-                        index = node.Index
-                    }
-                    if (node.Key) {
-                        key = node.Key
-                    }
-                    node = node.parentNode
-                }
-                target = node.Target
-            } catch (error) {
-                //footer区域报错退出
-                return
-            }
-            //customized-info--key区域退出
-            if (target.type !== 'linebreak' && !key) return
-            this.selection = {
-                target: null,
-                key: null,
-                index: null,
-                value: null,
-            }
-            this.selection.index = index
-            this.selection.key = key
-            this.selection.target = target
-            const selection = window.getSelection()
-            this.selection.offset = selection.focusOffset
-            if (key) {
-                this.selection.value = target[key][index] || target[key]
-            }
-            console.log(this.selection)
-        },
-        keydown(event) {
-            const value = event.key
-            console.log(this.list)
-        },
+        getNode(index) {
+            const main = this.$refs.sequence.children[1]
+            return main.children[index]
+        }
     },
 }
 </script>
@@ -110,6 +58,5 @@ export default {
     border-radius: 0 0 10px 10px;
     padding: $sequence-padding;
     margin-bottom: 20px;
-    outline: none;
 }
 </style>

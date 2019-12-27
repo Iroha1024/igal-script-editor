@@ -1,17 +1,18 @@
 <template>
-    <div class="sentence" :Target.prop="info">
+    <div class="sentence">
         <data-layout
             v-for="([key, value], index) of Object.entries(info)"
             :key="index"
             :class="key"
             :data="value"
-            :Key.prop="key"
+            :origin="info"
+            :KEY="key"
         ></data-layout>
     </div>
 </template>
 
 <script>
-import dataLayout from '../dataLayout'
+import dataLayout from '../dataLayout/dataLayout'
 
 export default {
     props: {

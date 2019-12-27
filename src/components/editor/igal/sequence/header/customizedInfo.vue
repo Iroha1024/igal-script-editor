@@ -1,23 +1,24 @@
 <template>
-    <div class="customized-info" :Target.prop="customized">
+    <div class="customized-info">
         <div
             class="customized-info__container"
             v-for="([key, value], index) of Object.entries(customized)"
         >
-            <div class="customized-info--key" contenteditable="false">
+            <div class="customized-info--key">
                 {{ key }}
             </div>
             <data-layout
                 class="customized-info--value"
                 :data="value"
-                :Key.prop="key"
+                :origin="customized"
+                :KEY="key"
             ></data-layout>
         </div>
     </div>
 </template>
 
 <script>
-import dataLayout from '../dataLayout'
+import dataLayout from '../dataLayout/dataLayout'
 
 export default {
     props: {

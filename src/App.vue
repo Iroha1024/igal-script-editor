@@ -9,7 +9,7 @@ import { ipcRenderer } from 'electron'
 import { mapState } from 'vuex'
 
 import Mousetrap from '@/utils/Mousetrap'
-import { setFontSize, setLineHeight } from '@/utils/setStyle'
+import { setFontSize } from '@/utils/setStyle'
 
 export default {
     created() {
@@ -22,7 +22,6 @@ export default {
     watch: {
         configData(newVal) {
             setFontSize(newVal.fontSize)
-            setLineHeight()
         },
     },
     methods: {
