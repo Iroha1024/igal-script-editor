@@ -1,5 +1,5 @@
 <template>
-    <div class="button-area" contenteditable="false">
+    <div class="button-area">
         <div
             class="next-button"
             :class="{ 'bg-color': isShowUuidOfNext }"

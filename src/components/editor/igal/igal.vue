@@ -34,7 +34,6 @@ import saveIgal from '@/utils/igal/saveIgal'
 import Type from '@/utils/shortcutKey'
 import createSequence from '@/utils/sequence/createSequence'
 import Mousetrap from '@/utils/Mousetrap'
-import { setLineHeight } from '@/utils/setStyle'
 
 export default {
     data() {
@@ -72,7 +71,6 @@ export default {
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
     },
     mounted() {
-        setLineHeight()
         this.bindKeyEvent()
     },
     methods: {
