@@ -78,8 +78,8 @@ export default {
         async save() {
             this.updateData()
             console.log(this.list)
-            await saveIgal(this.list, this.path)
-            this.$store.dispatch('updateUuids')
+            // await saveIgal(this.list, this.path)
+            // this.$store.dispatch('updateUuids')
         },
         //更新状态
         updateData() {

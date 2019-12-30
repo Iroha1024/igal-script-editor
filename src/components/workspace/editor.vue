@@ -8,7 +8,7 @@
 import Path from 'path'
 
 import igal from '@/components/editor/igal/igal'
-import Type from '@/utils/shortcutKey'
+import Key from '@/utils/shortcutKey'
 import Mousetrap from '@/utils/Mousetrap'
 
 export default {
@@ -46,7 +46,7 @@ export default {
             this.$nextTick(() => {
                 const fileDOM = this.$refs['file'] && this.$refs['file'].$el
                 if (fileDOM) {
-                    Mousetrap(fileDOM).bind(Type.save, () => {
+                    Mousetrap(fileDOM).bind(Key.save, () => {
                         this.$refs['file'].save()
                     })
                 }

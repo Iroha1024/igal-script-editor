@@ -1,7 +1,8 @@
 <template>
-    <div class="line">
+    <div class="linebreak">
         <data-layout
             v-for="([key, value], index) of Object.entries(info)"
+            v-if="!['uuid'].includes(key)"
             :key="index"
             :class="key"
             :data="value"
@@ -23,9 +24,3 @@ export default {
     },
 }
 </script>
-
-<style lang="scss" scoped>
-// .type {
-//     display: none;
-// }
-</style>

@@ -2,6 +2,7 @@
     <div class="sentence">
         <data-layout
             v-for="([key, value], index) of Object.entries(info)"
+            v-if="!['uuid', 'type'].includes(key)"
             :key="index"
             :class="key"
             :data="value"
@@ -38,9 +39,6 @@ export default {
     .remark {
         flex: 1;
         order: 3;
-    }
-    .type {
-        display: none;
     }
 }
 </style>

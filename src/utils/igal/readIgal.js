@@ -2,6 +2,8 @@ import fs, { promises } from 'fs'
 import Path from 'path'
 import { EOL } from 'os'
 
+import uuidv1 from 'uuid/v1'
+
 import Mark, { Type } from '../sequence/mark'
 
 /**
@@ -130,6 +132,7 @@ function extractContent(file, json, igal) {
         flag = false
     content.forEach(line => {
         const each_line = {}
+        each_line.uuid = uuidv1()
         let part = []
         switch (line[0]) {
             case Mark.start:

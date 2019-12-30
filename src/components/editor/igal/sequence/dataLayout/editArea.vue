@@ -3,11 +3,13 @@
         class="edit-area"
         contenteditable="true"
         v-text="innerText"
-        @input="changeData"
+        @input="input($event)"
     ></div>
 </template>
 
 <script>
+import uuidv1 from 'uuid/v1'
+
 import { Type } from '@/utils/sequence/mark'
 
 export default {
@@ -21,7 +23,7 @@ export default {
             innerText: '',
         }
     },
-    inject: ['sequence', 'getNode'],
+    inject: ['sequence', 'getMainChild'],
     created() {
         if (this.index !== undefined) {
             this.innerText = this.origin[this.KEY][this.index]
@@ -33,7 +35,9 @@ export default {
         }
     },
     methods: {
-        changeData() {
+        input(event) {
+            if (!event.data && event.inputType !== 'deleteContentBackward')
+                return
             if (this.origin.type === Type.linebreak) {
                 this.transformLinebreak()
             } else {
@@ -51,11 +55,12 @@ export default {
                 text: [this.$el.innerText],
                 remark: [''],
                 type: Type.sentence,
+                uuid: uuidv1(),
             }
             const index = this.sequence.data.indexOf(this.origin)
             this.sequence.data.splice(index, 1, info)
             this.$nextTick(() => {
-                const sentence = this.getNode(index)
+                const sentence = this.getMainChild(index)
                 const text = sentence.children[1]
                 const textNode = text.firstChild.firstChild
                 const selection = window.getSelection()

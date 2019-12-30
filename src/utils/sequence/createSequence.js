@@ -2,8 +2,6 @@ import { readJson } from '@/utils/igal/readIgal'
 
 import uuidv1 from 'uuid/v1'
 
-const uuid = uuidv1()
-
 /**
  * 创建新序列
  * @param {string} setting 配置文件
@@ -20,10 +18,11 @@ export default async function createSequence(setting) {
         data: [
             {
                 type: 'linebreak',
+                uuid: uuidv1(),
             },
         ],
         prev: [],
         next: [],
-        uuid,
+        uuid: uuidv1(),
     }
 }

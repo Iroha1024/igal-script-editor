@@ -2,6 +2,7 @@
     <div class="branch">
         <data-layout
             v-for="([key, value], index) of Object.entries(info)"
+            v-if="!['uuid', 'type'].includes(key)"
             :key="index"
             :class="key"
             :data="value"
@@ -25,13 +26,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.branch {
-    // .question {
-    // }
-    // .choices {
-    // }
-    .type {
-        display: none;
-    }
-}
+// .branch {
+// .question {
+// }
+// .choices {
+// }
+// }
 </style>
