@@ -118,6 +118,13 @@ export async function readAllSequences(path, setting) {
     return list
 }
 
+function setUuid(arr) {
+    return arr.map(item => ({
+        value: item,
+        uuid: uuidv1(),
+    }))
+}
+
 /**
  * 提取每行内容
  * @param {string} file igal读取的字符串
@@ -167,7 +174,9 @@ function extractContent(file, json, igal) {
                 const [name, text, remark] = part
                 each_line.name = name
                 each_line.text = splitBy(text, '|')
+                each_line.text = setUuid(each_line.text)
                 each_line.remark = splitBy(remark, '|')
+                each_line.remark = setUuid(each_line.remark)
                 each_line.type = Type.sentence
                 data.push(each_line)
                 break
@@ -175,7 +184,7 @@ function extractContent(file, json, igal) {
                 part = splitBy(line, '|')
                 const [question, ...choices] = part
                 each_line.question = question.slice(1)
-                each_line.choices = choices
+                each_line.choices = setUuid(choices)
                 each_line.type = Type.branch
                 data.push(each_line)
                 break

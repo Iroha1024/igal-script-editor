@@ -1,8 +1,10 @@
 const Type = {
     save: 'ctrl+s',
     insertSequence: 'shift+ins',
-    newLine: 'enter',
+    addLine: 'enter',
     deleteLine: 'ctrl+d',
+    addLineItem: 'shift+enter',
+    deleteLineItem: 'backspace',
 }
 
 export default Type

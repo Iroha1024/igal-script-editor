@@ -28,7 +28,7 @@ import linebreak from './main/linebreak'
 import branch from './main/branch'
 import buttonArea from './footer/buttonArea'
 
-import { Type } from '@/utils/sequence/mark.js'
+import { Type } from '@/utils/sequence/mark'
 import Key from '@/utils/shortcutKey'
 import Mousetrap from '@/utils/Mousetrap'
 
@@ -47,14 +47,17 @@ export default {
         return {
             sequence: this.sequence,
             getMainChild: this.getMainChild,
+            focusLine: this.focusLine,
+            deletionRule: this.deletionRule,
         }
     },
     mounted() {
         const sequence = this.$refs.sequence
-        this.newLine(sequence)
+        this.addLine(sequence)
         this.deleteLine(sequence)
     },
     methods: {
+        //根据index在main中查找所属节点
         getMainChild(index) {
             return this.$refs.main.children[index]
         },
@@ -83,18 +86,25 @@ export default {
                     }
                 }
             }
-            const node = getFirstChildNode(newLine)
-            console.log(node)
-            range.setStart(node, 0)
+            let node = getFirstChildNode(newLine)
+            if (node.textContent) {
+                const index = node.textContent.length
+                range.setStart(node.firstChild, index)
+            } else {
+                range.setStart(node, 0)
+            }
             selection.addRange(range)
         },
-        inWhichArea(className, displayComp) {
+        //根据className返回当前显示组件
+        inWhichComp(className, displayComp) {
             return className.includes(displayComp.className)
         },
-        newLine(sequence) {
-            Mousetrap(sequence).bind(Key.newLine, event => {
+        addLine(sequence) {
+            Mousetrap(sequence).bind(Key.addLine, event => {
                 event.preventDefault()
+                //当前事件节点
                 const node = event.target
+                //当前显示组件（sentence、linebreak、branch）
                 const displayComp = this.getDisplayComp(node)
                 const info = {
                     type: Type.linebreak,
@@ -111,8 +121,8 @@ export default {
                         })
                         break
                     //若在sentence，linebreak组件中enter，新建一行在下一行
-                    case this.inWhichArea(Type.sentence, displayComp):
-                    case this.inWhichArea(Type.linebreak, displayComp):
+                    case this.inWhichComp(Type.sentence, displayComp):
+                    case this.inWhichComp(Type.linebreak, displayComp):
                         this.sequence.data.splice(index + 1, 0, info)
                         this.$nextTick(() => {
                             const newLine = this.getMainChild(index + 1)
@@ -120,8 +130,11 @@ export default {
                         })
                         break
                     //若在branch组件中enter，新建choice在最末尾
-                    case this.inWhichArea(Type.branch, displayComp):
-                        const choice = ''
+                    case this.inWhichComp(Type.branch, displayComp):
+                        const choice = {
+                            value: '',
+                            uuid: uuidv1(),
+                        }
                         this.sequence.data[index].choices.push(choice)
                         this.$nextTick(() => {
                             const branch = this.getMainChild(index)
@@ -134,34 +147,41 @@ export default {
                 }
             })
         },
+        /**
+         * 删除第一项元素则将其用info替换
+         *
+         * 删除其余项则删除后光标跳转至上一行
+         *
+         * 若在删除第一项时，兄弟节点大于1时，直接删除该元素，光标不变
+         */
+        deletionRule(info, arr, index) {
+            let focusLineIndex
+            if (index === 0) {
+                arr.splice(0, 1, info)
+                focusLineIndex = 0
+            } else {
+                arr.splice(index, 1)
+                focusLineIndex = index - 1
+            }
+            if (index === 0 && arr.length > 1) {
+                arr.splice(0, 1)
+            }
+            return focusLineIndex
+        },
         deleteLine(sequence) {
             Mousetrap(sequence).bind(Key.deleteLine, event => {
                 event.preventDefault()
                 const node = event.target
                 const displayComp = this.getDisplayComp(node)
                 const index = [...this.$refs.main.children].indexOf(displayComp)
-                function deleteItem(info, arr, index) {
-                    let focusLineIndex
-                    if (index === 0) {
-                        arr.splice(0, 1, info)
-                        focusLineIndex = 0
-                    } else {
-                        arr.splice(index, 1)
-                        focusLineIndex = index - 1
-                    }
-                    if (index === 0 && arr.length > 1) {
-                        arr.splice(0, 1)
-                    }
-                    return focusLineIndex
-                }
                 switch (true) {
-                    case this.inWhichArea(Type.sentence, displayComp):
-                    case this.inWhichArea(Type.linebreak, displayComp):
+                    case this.inWhichComp(Type.sentence, displayComp):
+                    case this.inWhichComp(Type.linebreak, displayComp):
                         const info = {
                             type: Type.linebreak,
                             uuid: uuidv1(),
                         }
-                        const focusLineIndex = deleteItem(
+                        const focusLineIndex = this.deletionRule(
                             info,
                             this.sequence.data,
                             index
@@ -171,22 +191,30 @@ export default {
                             this.focusLine(nextLine)
                         })
                         break
-                    case this.inWhichArea(Type.branch, displayComp):
-                        // this.$nextTick(() => {
-                        //     const branch = this.getMainChild(index)
-                        //     const choices = branch.children[1]
-                        //     const choiceIndex = [...choices.children].indexOf(
-                        //         node
-                        //     )
-                        //     const choice = ''
-                        //     const focusLineIndex = deleteItem(choice, this.sequence.data[index].choices, choiceIndex)
-                        //     console.log('choiceIndex', choiceIndex);
-                        //     console.log('focusLineIndex', focusLineIndex);
-                        //     this.$nextTick(() => {
-                        //         const nextLine = choices.children[focusLineIndex]
-                        //         this.focusLine(nextLine)
-                        //     })
-                        // })
+                    case this.inWhichComp(Type.branch, displayComp):
+                        this.$nextTick(() => {
+                            const branch = this.getMainChild(index)
+                            const choices = branch.children[1]
+                            //无法在question区域中删除
+                            if (![...choices.children].includes(node)) return
+                            const choiceIndex = [...choices.children].indexOf(
+                                node
+                            )
+                            const choice = {
+                                value: '',
+                                uuid: uuidv1(),
+                            }
+                            const focusLineIndex = this.deletionRule(
+                                choice,
+                                this.sequence.data[index].choices,
+                                choiceIndex
+                            )
+                            this.$nextTick(() => {
+                                const nextLine =
+                                    choices.children[focusLineIndex]
+                                this.focusLine(nextLine)
+                            })
+                        })
                         break
                 }
             })

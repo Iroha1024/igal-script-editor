@@ -2,7 +2,7 @@
     <div v-if="Array.isArray(data)">
         <edit-area
             v-for="(item, index) of data"
-            :key="index"
+            :key="item.uuid"
             :origin="origin"
             :KEY="KEY"
             :index="index"

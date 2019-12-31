@@ -11,6 +11,8 @@
 import uuidv1 from 'uuid/v1'
 
 import { Type } from '@/utils/sequence/mark'
+import Key from '@/utils/shortcutKey'
+import Mousetrap from '@/utils/Mousetrap'
 
 export default {
     props: {
@@ -23,16 +25,59 @@ export default {
             innerText: '',
         }
     },
-    inject: ['sequence', 'getMainChild'],
+    inject: ['sequence', 'getMainChild', 'focusLine', 'deletionRule'],
     created() {
         if (this.index !== undefined) {
-            this.innerText = this.origin[this.KEY][this.index]
+            this.innerText = this.origin[this.KEY][this.index].value
         } else {
             this.innerText = this.origin[this.KEY]
         }
         if (this.origin.type === Type.linebreak) {
             this.innerText = ''
         }
+    },
+    mounted() {
+        this.$nextTick(() => {
+            Mousetrap(this.$el).bind(Key.addLineItem, event => {
+                event.preventDefault()
+                if (this.index !== undefined) {
+                    const arr = this.origin[this.KEY]
+                    const info = {
+                        value: '',
+                        uuid: uuidv1(),
+                    }
+                    arr.splice(this.index + 1, 0, info)
+                    this.$nextTick(() => {
+                        const newLine = this.$el.parentNode.children[
+                            this.index + 1
+                        ]
+                        this.focusLine(newLine)
+                    })
+                }
+            })
+            Mousetrap(this.$el).bind(Key.deleteLineItem, event => {
+                const text = this.origin[this.KEY][this.index].value
+                if (this.index !== undefined && text === '') {
+                    const arr = this.origin[this.KEY]
+                    const info = {
+                        value: '',
+                        uuid: uuidv1(),
+                    }
+                    const parentNode = this.$el.parentNode
+                    const focusLineIndex = this.deletionRule(
+                        info,
+                        arr,
+                        this.index
+                    )
+                    this.$nextTick(() => {
+                        const newLine = parentNode.children[focusLineIndex]
+                        setTimeout(() => {
+                            this.focusLine(newLine)
+                        }, 100)
+                    })
+                }
+            })
+        })
     },
     methods: {
         input(event) {
@@ -42,7 +87,7 @@ export default {
                 this.transformLinebreak()
             } else {
                 if (this.index !== undefined) {
-                    this.origin[this.KEY][this.index] = this.$el.innerText
+                    this.origin[this.KEY][this.index].value = this.$el.innerText
                 } else {
                     this.origin[this.KEY] = this.$el.innerText
                 }
@@ -52,8 +97,18 @@ export default {
         transformLinebreak() {
             const info = {
                 name: '',
-                text: [this.$el.innerText],
-                remark: [''],
+                text: [
+                    {
+                        value: this.$el.innerText,
+                        uuid: uuidv1(),
+                    },
+                ],
+                remark: [
+                    {
+                        value: '',
+                        uuid: uuidv1(),
+                    },
+                ],
                 type: Type.sentence,
                 uuid: uuidv1(),
             }
