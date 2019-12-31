@@ -1,6 +1,8 @@
 <template>
     <div id="app">
-        <router-view></router-view>
+        <keep-alive>
+            <router-view :key="$route.path"></router-view>
+        </keep-alive>
     </div>
 </template>
 
@@ -9,7 +11,7 @@ import { ipcRenderer } from 'electron'
 import { mapState } from 'vuex'
 
 import Mousetrap from '@/utils/Mousetrap'
-import { setFontSize } from '@/utils/setStyle'
+import setStyle from '@/utils/setStyle'
 
 export default {
     created() {
@@ -20,8 +22,11 @@ export default {
         ...mapState(['configData']),
     },
     watch: {
-        configData(newVal) {
-            setFontSize(newVal.fontSize)
+        configData: {
+            handler(newVal) {
+                setStyle(newVal)
+            },
+            deep: true
         },
     },
     methods: {
@@ -45,6 +50,7 @@ export default {
 html {
     height: 100%;
     font-size: var(--font-size);
+    font-family: var(--font-family);
 }
 body,
 #app {

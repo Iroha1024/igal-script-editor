@@ -26,10 +26,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-// .branch {
-// .question {
-// }
-// .choices {
-// }
-// }
+.branch {
+    text-align: center;
+    border: $border-size $border-style $border-color !important;
+    margin-top: 15px;
+    border-radius: 10px;
+    .question {
+        border-bottom: $border-size $border-style $border-color;
+    }
+    /deep/ .choices > div + div {
+        border-top: $border-size $border-style $border-color;
+    }
+}
 </style>

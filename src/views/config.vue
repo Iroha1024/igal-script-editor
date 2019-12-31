@@ -5,14 +5,30 @@
         </div>
         <hr />
         <div class="config__container" @input="changeVal($event)">
-            <div class="config-item" v-for="(key, index) of Object.keys(data)">
+            <div
+                class="config-item"
+                v-for="([key, { value, type }], index) of Object.entries(data)"
+            >
                 <div class="item--key">{{ key }}</div>
-                <input
-                    class="item--value"
-                    :index="key"
-                    v-model.number="data[key]"
-                    type="number"
-                />
+                <template v-if="type === 'input'">
+                    <input
+                        class="item--value"
+                        :index="key"
+                        v-model.number="data[key].value"
+                        type="number"
+                    />
+                </template>
+                <template v-else-if="type === 'select'">
+                    <select class="item--value" v-model="data[key].value">
+                        <option
+                            v-for="({ text, value }, index) of getSelectValue(
+                                key
+                            )"
+                            :value="value"
+                            >{{ text }}</option
+                        >
+                    </select>
+                </template>
             </div>
             <div class="save" @click="save">保存</div>
         </div>
@@ -29,15 +45,32 @@ export default {
     },
     data() {
         return {
+            backPath: '',
             data: null,
+            fontFamily: [
+                { text: '默认', value: 'none' },
+                { text: 'fantasy', value: 'fantasy' },
+                { text: '华文中宋', value: 'STZhongsong' },
+                { text: '华文隶书', value: 'STLiti' },
+                { text: '华文彩云', value: 'STCaiyun' },
+                { text: '华文仿宋', value: 'STFangsong' },
+            ],
         }
     },
     created() {
         this.data = JSON.parse(JSON.stringify(this.configData))
     },
+    beforeRouteEnter (to, from, next) {
+        next(vm => {
+            vm.backPath = from.path
+        })
+    },
     methods: {
         back() {
-            this.$router.push({ path: '/' })
+            this.$router.push({ path: this.backPath })
+        },
+        getSelectValue(key) {
+            return this[key]
         },
         changeVal(event) {
             const key = event.target.getAttribute('index')
@@ -46,7 +79,7 @@ export default {
                     const min = 20,
                         max = 40
                     if (event.target.value > max) {
-                        this.data[key] = max
+                        this.data[key].value = max
                     }
                     //当有输入值，且数位大于1，且数值小于min时
                     if (
@@ -54,10 +87,12 @@ export default {
                         event.target.value.length > 1 &&
                         event.target.value < min
                     ) {
-                        this.data[key] = min
+                        this.data[key].value = min
                     }
                     if (event.target.value.includes('.')) {
-                        this.data[key] = Number(event.target.value).toFixed(1)
+                        this.data[key].value = Number(
+                            event.target.value
+                        ).toFixed(1)
                     }
                     break
             }
@@ -103,13 +138,17 @@ export default {
         align-items: center;
         .config-item {
             display: flex;
+            align-items: center;
             & * {
                 margin-left: 20px;
             }
-            input {
+            .item--value {
+                padding: 5px 0 5px 10px;
+                width: 200px;
                 outline: none;
                 font-size: 20px;
-                padding-left: 10px;
+            }
+            input {
                 &::-webkit-outer-spin-button,
                 &::-webkit-inner-spin-button {
                     -webkit-appearance: none;
@@ -123,6 +162,7 @@ export default {
             background-color: #a5f496;
             border-radius: 5px;
             cursor: pointer;
+            user-select: none;
             &:hover {
                 background-color: #67ec4c;
             }

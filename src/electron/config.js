@@ -6,7 +6,14 @@ const dataPath = app.getPath('userData')
 const configPath = Path.resolve(dataPath, 'config.json')
 
 const data = {
-    fontSize: 25,
+    fontSize: {
+        value: 25,
+        type: 'input'
+    },
+    fontFamily: {
+        value: 'none',
+        type: 'select'
+    },
 }
 let configData
 

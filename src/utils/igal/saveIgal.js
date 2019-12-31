@@ -18,12 +18,12 @@ export default async function saveIgal(igal, path) {
         let main = sequence.data.map(line => {
             switch (line.type) {
                 case Type.sentence:
-                    const text = line.text.join('|')
-                    const remark = line.remark.join('|')
+                    const text = line.text.map(item => item.value).join('|')
+                    const remark = line.remark.map(item => item.value).join('|')
                     return `${Mark.sentence}${line.name}${Mark.sentence}${text}${Mark.sentence}${remark}`
                 case Type.branch:
                     const question = `${Mark.branch}${line.question}|`
-                    const choices = line.choices.join('|')
+                    const choices = line.choices.map(item => item.value).join('|')
                     return `${question}${choices}`
                 case Type.linebreak:
                     return ''

@@ -229,5 +229,11 @@ export default {
     border-radius: 0 0 10px 10px;
     padding: $sequence-padding;
     margin-bottom: 20px;
+    main > div {
+        &:nth-child(1) {
+            border-top: $border-size $border-style $border-color; 
+        }
+        border-bottom: $border-size $border-style $border-color;
+    }
 }
 </style>

@@ -56,7 +56,12 @@ export default {
                 }
             })
             Mousetrap(this.$el).bind(Key.deleteLineItem, event => {
-                const text = this.origin[this.KEY][this.index].value
+                let text
+                try {
+                    text = this.origin[this.KEY][this.index].value
+                } catch {
+                    return
+                }
                 if (this.index !== undefined && text === '') {
                     const arr = this.origin[this.KEY]
                     const info = {
