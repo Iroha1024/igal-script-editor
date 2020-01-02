@@ -49,7 +49,9 @@ export default {
         }
     },
     computed: {
-        ...mapState(['configPath']),
+        ...mapState({
+            configPath: state => state.project.configPath
+        }),
     },
     props: {
         path: String,
@@ -67,7 +69,7 @@ export default {
         }
     },
     created() {
-        readIgalSync(this.path, this.list, this.$store.state.configPath)
+        readIgalSync(this.path, this.list, this.configPath)
         extraOperate(this.list, this.linked, this.unlinked, this.echarts)
     },
     mounted() {

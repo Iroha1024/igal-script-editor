@@ -15,7 +15,13 @@ export default {
         }
     },
     computed: {
-        ...mapState(['configPath', 'files', 'file', 'dir', 'chosen']),
+        ...mapState({
+            configPath: state => state.project.configPath,
+            files: state => state.fileManage.files,
+            file: state => state.fileManage.file,
+            dir: state => state.fileManage.dir,
+            chosen: state => state.fileManage.chosen,
+        }),
     },
     mounted() {
         this.clickControl()

@@ -69,7 +69,9 @@ export default {
         }
     },
     computed: {
-        ...mapState(['uuids']),
+        ...mapState({
+            uuids: state => state.project.uuids
+        }),
         next() {
             return this.uuids.filter(
                 uuid =>

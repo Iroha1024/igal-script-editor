@@ -73,7 +73,9 @@ export default {
         }
     },
     computed: {
-        ...mapState(['files']),
+        ...mapState({
+            files: state => state.fileManage.files,
+        }),
     },
     mounted() {
         this.openMenu()

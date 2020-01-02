@@ -41,7 +41,9 @@ import { ipcRenderer } from 'electron'
 
 export default {
     computed: {
-        ...mapState(['configData']),
+        ...mapState({
+            configData: state => state.program.configData,
+        }),
     },
     data() {
         return {

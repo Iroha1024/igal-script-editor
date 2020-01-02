@@ -20,7 +20,10 @@ import { readDir } from '@/utils/igal/readIgal'
 
 export default {
     computed: {
-        ...mapState(['dirPath', 'files']),
+        ...mapState({
+            dirPath: state => state.project.dirPath,
+            files: state => state.fileManage.files,
+        }),
     },
     components: {
         dir,

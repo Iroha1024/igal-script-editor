@@ -19,7 +19,9 @@ export default {
         this.skipToConfig()
     },
     computed: {
-        ...mapState(['configData']),
+        ...mapState({
+            configData: state => state.program.configData
+        }),
     },
     watch: {
         configData: {
