@@ -38,6 +38,9 @@ import Mousetrap from '@/utils/Mousetrap'
 export default {
     data() {
         return {
+            igal: {
+                list: [],
+            },
             list: [],
             linked: [],
             unlinked: [],
@@ -50,7 +53,8 @@ export default {
     },
     computed: {
         ...mapState({
-            configPath: state => state.project.configPath
+            configPath: state => state.project.configPath,
+            initIgalData: state => state.project.initIgalData,
         }),
     },
     props: {
@@ -65,17 +69,25 @@ export default {
     provide() {
         return {
             save: this.save,
-            list: this.list,
+            igal: this.igal,
         }
     },
     created() {
-        readIgalSync(this.path, this.list, this.configPath)
-        extraOperate(this.list, this.linked, this.unlinked, this.echarts)
+        this.getIgal()
     },
     mounted() {
         this.bindKeyEvent()
     },
     methods: {
+        getIgal() {
+            this.list = this.initIgalData.get(this.path)
+            if (!this.list) {
+                this.list = []
+                readIgalSync(this.path, this.list, this.configPath)
+            }
+            this.igal.list = this.list
+            extraOperate(this.list, this.linked, this.unlinked, this.echarts)
+        },
         //保存文件后，更新uuids
         async save() {
             this.updateData()

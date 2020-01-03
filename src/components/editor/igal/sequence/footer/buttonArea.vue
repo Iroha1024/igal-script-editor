@@ -1,20 +1,6 @@
 <template>
     <div class="button-area">
-        <div
-            class="next-button"
-            :class="{ 'bg-color': isShowUuidOfNext }"
-            v-for="(uuid, index) of sequence.next"
-            :key="index"
-        >
-            <div class="uuid-text" :class="{ 'show-text': isShowUuidOfNext }">
-                {{ uuid }}
-            </div>
-            <delete-button
-                class="uuid-text--delete"
-                @click.native="removeSequence(index)"
-            ></delete-button>
-        </div>
-        <div class="next-button">
+        <div class="next-button button-area--add">
             <input class="search" type="text" v-model="input" />
             <ul class="uuid-list list--hover">
                 <li
@@ -37,6 +23,20 @@
                 </li>
             </ul>
             <add-button class="uuid-list--add"></add-button>
+        </div>
+        <div
+            class="next-button button-area--delete"
+            :class="{ 'bg-color': isShowUuidOfNext }"
+            v-for="(uuid, index) of sequence.next"
+            :key="index"
+        >
+            <div class="uuid-text" :class="{ 'show-text': isShowUuidOfNext }">
+                {{ uuid }}
+            </div>
+            <delete-button
+                class="uuid-text--delete"
+                @click.native="removeSequence(index)"
+            ></delete-button>
         </div>
         <div
             class="show-next iconfont"
@@ -70,7 +70,7 @@ export default {
     },
     computed: {
         ...mapState({
-            uuids: state => state.project.uuids
+            uuids: state => state.project.uuids,
         }),
         next() {
             return this.uuids.filter(
@@ -80,7 +80,7 @@ export default {
             )
         },
     },
-    inject: ['save', 'list'],
+    inject: ['save', 'igal'],
     methods: {
         //删除序列后，保存
         removeSequence(index) {
@@ -114,7 +114,7 @@ export default {
         },
         //不属于当前igal文件中的序列
         isOutside(uuid) {
-            return !this.list.map(sequence => sequence.uuid).includes(uuid)
+            return !this.igal.list.map(sequence => sequence.uuid).includes(uuid)
         },
     },
 }
@@ -231,6 +231,12 @@ export default {
             max-width: 200px;
             padding: 0 $button-size / 2;
         }
+    }
+    .button-area--add {
+        z-index: 101;
+    }
+    .button-area--delete {
+        z-index: 100;
     }
     .bg-color {
         background-color: $text-bg-color;

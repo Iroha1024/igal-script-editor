@@ -50,8 +50,12 @@ import Path from 'path'
 import { ipcRenderer, shell } from 'electron'
 import { mapState } from 'vuex'
 
-import { findArrOfDir, findFileByPath, findArrOfArr } from '@/utils/findOrigin'
-import toggleDirShow from '@/utils/toggleDirShow'
+import {
+    findArrOfDir,
+    findFileByPath,
+    findArrOfArr,
+} from '@/utils/fileManage/findOrigin'
+import toggleDirShow from '@/utils/fileManage/toggleDirShow'
 
 export default {
     data() {

@@ -33,9 +33,9 @@ export default {
         this.resize()
     },
     methods: {
-        //获取文件夹信息
+        //获取文件夹信息后，更新uuids
         getDirName() {
-            ipcRenderer.on('select-dir', (event, path) => {
+            ipcRenderer.on('select-dir', async (event, path) => {
                 let dirPath = path[0]
                 //没选择文件夹，则取消
                 if (dirPath) {
@@ -49,9 +49,24 @@ export default {
                         isEdit: false,
                         isNewBuilt: false,
                     })
-                    this.getDirContents(dirPath, this.files)
+                    await this.getDirContents(dirPath, this.files)
+                    this.$store.dispatch('updateUuids', { init: true })
                 }
             })
+        },
+        /**
+         * @param {string} path 当前文件所在路径
+         * @param {string} fileName 当前文件名
+         * @param {string} path 项目文件路径
+         */
+        isSettingJson(path, fileName, dirPath) {
+            return (
+                Path.resolve(path, fileName) ===
+                Path.resolve(dirPath, 'setting.json')
+            )
+        },
+        isRegulatedFormat(fileName) {
+            return ['.igal', '.json'].includes(Path.extname(fileName))
         },
         //获取文件夹内信息，传入files
         async getDirContents(path, parent) {
@@ -72,24 +87,22 @@ export default {
                             newParent
                         )
                     } else {
-                        if (
-                            Path.resolve(path, file.name) ===
-                            Path.resolve(this.dirPath, 'setting.json')
-                        ) {
+                        if (this.isSettingJson(path, file.name, this.dirPath)) {
                             //获取配置信息路径，更新uuids
                             this.$store.commit(
                                 'setConfigPath',
                                 Path.resolve(path, file.name)
                             )
-                            this.$store.dispatch('updateUuids')
                         }
-                        parent.push({
-                            name: file.name,
-                            path: Path.resolve(path, file.name),
-                            type: 'file',
-                            isEdit: false,
-                            isNewBuilt: false,
-                        })
+                        if (this.isRegulatedFormat(file.name)) {
+                            parent.push({
+                                name: file.name,
+                                path: Path.resolve(path, file.name),
+                                type: 'file',
+                                isEdit: false,
+                                isNewBuilt: false,
+                            })
+                        }
                     }
                 }
             }

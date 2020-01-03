@@ -83,39 +83,31 @@ export async function readDir(path) {
 }
 
 /**
- * 读取项目下所有序列
- * @param {string} path 项目文件夹路径
+ * 读取项目下所有序列，并生成path-->igal的Map
+ * @param {Array} files 项目下所有文件及文件夹
  * @param {string} setting setting.json路径
  */
-export async function readAllSequences(path, setting) {
-    async function operateItemOfDir(path, files) {
-        //存放igal的数组 e.g. [igal, igal, [sequence, sequence]]
-        const wrappedList = []
+export async function readAllSequences(files, setting) {
+    const initIgalData = new Map()
+    //存放igal的数组 e.g. [igal, igal, [sequence, sequence]]
+    const wrappedList = []
+    async function readAllIgal(files, setting) {
         for (const file of files) {
-            if (file.isDirectory()) {
-                const deepWrappedList = await readAllIgal(
-                    `${path}\\${file.name}`
-                )
-                deepWrappedList.forEach(igal => {
-                    wrappedList.push(igal)
-                })
-            } else if (Path.extname(file.name) === '.igal') {
-                const igal = await readIgal(`${path}\\${file.name}`, setting)
+            if (Array.isArray(file)) {
+                await readAllIgal(file, setting)
+            } else if (Path.extname(file.path) === '.igal') {
+                const igal = await readIgal(file.path, setting)
+                initIgalData.set(file.path, igal)
                 wrappedList.push(igal)
             }
         }
-        return wrappedList
     }
-    async function readAllIgal(path) {
-        const files = await readDir(path)
-        const data = await operateItemOfDir(path, files)
-        return data
+    await readAllIgal(files, setting)
+    const sequenceList = wrappedList.flat()
+    return {
+        initIgalData,
+        sequenceList,
     }
-
-    let wrappedList, list
-    wrappedList = await readAllIgal(path)
-    list = wrappedList.flat()
-    return list
 }
 
 function setUuid(arr) {

@@ -231,7 +231,7 @@ export default {
     margin-bottom: 20px;
     main > div {
         &:nth-child(1) {
-            border-top: $border-size $border-style $border-color; 
+            border-top: $border-size $border-style $border-color;
         }
         border-bottom: $border-size $border-style $border-color;
     }

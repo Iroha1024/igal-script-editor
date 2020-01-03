@@ -20,7 +20,7 @@ export default {
     },
     computed: {
         ...mapState({
-            configData: state => state.program.configData
+            configData: state => state.program.configData,
         }),
     },
     watch: {
@@ -28,7 +28,7 @@ export default {
             handler(newVal) {
                 setStyle(newVal)
             },
-            deep: true
+            deep: true,
         },
     },
     methods: {

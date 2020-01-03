@@ -5,8 +5,8 @@ import Path from 'path'
 import { mapState } from 'vuex'
 
 import createIgal from '@/utils/igal/createIgal'
-import { findArrOfDir } from '@/utils/findOrigin'
-import toggleDirShow from '@/utils/toggleDirShow'
+import { findArrOfDir } from '@/utils/fileManage/findOrigin'
+import toggleDirShow from '@/utils/fileManage/toggleDirShow'
 
 export default {
     data() {
@@ -113,6 +113,7 @@ export default {
                 if (exname === '.igal') {
                     await createIgal(this.configPath, file.path)
                     file.isNewBuilt = false
+                    this.$store.dispatch('updateUuids')
                     this.$router.push({
                         path: `/file/${file.path}`,
                     })
@@ -156,9 +157,9 @@ export default {
                 this.$store.commit('setDir', null)
             }
             //左键单击其他区域
-            window.addEventListener('click', click)
+            window.onclick = click
             //右键单击其他区域
-            window.addEventListener('contextmenu', rightClick)
+            window.oncontextmenu = rightClick
         },
     },
     render(h) {

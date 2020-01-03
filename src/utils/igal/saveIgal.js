@@ -23,7 +23,9 @@ export default async function saveIgal(igal, path) {
                     return `${Mark.sentence}${line.name}${Mark.sentence}${text}${Mark.sentence}${remark}`
                 case Type.branch:
                     const question = `${Mark.branch}${line.question}|`
-                    const choices = line.choices.map(item => item.value).join('|')
+                    const choices = line.choices
+                        .map(item => item.value)
+                        .join('|')
                     return `${question}${choices}`
                 case Type.linebreak:
                     return ''

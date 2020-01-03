@@ -62,7 +62,7 @@ export default {
     created() {
         this.data = JSON.parse(JSON.stringify(this.configData))
     },
-    beforeRouteEnter (to, from, next) {
+    beforeRouteEnter(to, from, next) {
         next(vm => {
             vm.backPath = from.path
         })

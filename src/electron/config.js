@@ -8,11 +8,11 @@ const configPath = Path.resolve(dataPath, 'config.json')
 const data = {
     fontSize: {
         value: 25,
-        type: 'input'
+        type: 'input',
     },
     fontFamily: {
         value: 'none',
-        type: 'select'
+        type: 'select',
     },
 }
 let configData

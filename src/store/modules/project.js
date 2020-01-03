@@ -7,6 +7,8 @@ const state = {
     configPath: '',
     //项目下所有序列uuid
     uuids: [],
+    //存放path-->igal的初始化map
+    initIgalData: null,
 }
 
 const mutations = {
@@ -16,12 +18,20 @@ const mutations = {
     setConfigPath(state, path) {
         state.configPath = path
     },
+    setInitIgalData(state, initIgalData) {
+        state.initIgalData = initIgalData
+    },
 }
 
 const actions = {
-    async updateUuids({ state }) {
-        const list = await readAllSequences(state.dirPath, state.configPath)
-        state.uuids = list.map(sequence => sequence.uuid)
+    async updateUuids({ state, commit, rootState }, { init = false } = {}) {
+        const files = rootState.fileManage.files
+        const { initIgalData, sequenceList } = await readAllSequences(
+            files,
+            state.configPath
+        )
+        state.uuids = sequenceList.map(sequence => sequence.uuid)
+        if (init) commit('setInitIgalData', initIgalData)
     },
 }
 
