@@ -1,5 +1,5 @@
 <template>
-    <div class="sequence" ref="sequence">
+    <div class="sequence" ref="sequence" @input="input($event)">
         <header>
             <customized-info
                 :customized="sequence.customized"
@@ -11,6 +11,7 @@
                 v-for="(item, index) of sequence.data"
                 :key="item.uuid"
                 :info="item"
+                ref="child"
             ></component>
         </main>
         <footer>
@@ -33,6 +34,12 @@ import Key from '@/utils/shortcutKey'
 import Mousetrap from '@/utils/Mousetrap'
 
 export default {
+    data() {
+        return {
+            domToEditArea: new WeakMap(),
+            domToChild: new WeakMap(),
+        }
+    },
     props: {
         sequence: Object,
     },
@@ -45,31 +52,33 @@ export default {
     },
     provide() {
         return {
-            sequence: this.sequence,
-            getMainChild: this.getMainChild,
-            focusLine: this.focusLine,
-            deletionRule: this.deletionRule,
+            setDomToEditArea: this.setDomToEditArea,
+            setDomToChild: this.setDomToChild,
+            deleteDomRef: this.deleteDomRef,
         }
     },
     mounted() {
-        const sequence = this.$refs.sequence
-        this.addLine(sequence)
-        this.deleteLine(sequence)
+        this.bindKeyEvent()
     },
     methods: {
-        //根据index在main中查找所属节点
-        getMainChild(index) {
-            return this.$refs.main.children[index]
+        //editArea dom-->editArea instance
+        setDomToEditArea(dom, sequence) {
+            this.domToEditArea.set(dom, sequence)
         },
-        //获取显示组件，若没找到，返回div.sequence
-        getDisplayComp(editNode) {
-            const nodeClassList = [Type.sentence, Type.linebreak, Type.branch]
-            let currentNode = editNode
-            do {
-                currentNode = currentNode.parentNode
-                if (nodeClassList.includes(currentNode.className)) break
-            } while (!currentNode.className.includes('sequence'))
-            return currentNode
+        //editArea dom-->child instance
+        setDomToChild(dom, child) {
+            this.domToChild.set(dom, child)
+        },
+        deleteDomRef(dom) {
+            this.domToEditArea.delete(dom)
+            this.domToChild.delete(dom)
+        },
+        getChildDomByInfo(info) {
+            return this.$refs.child.filter(item => item.info === info).pop().$el
+        },
+        //根据className返回当前显示组件
+        inWhichComp(dom, className) {
+            return dom.className.includes(className)
         },
         //光标换行
         focusLine(newLine) {
@@ -95,52 +104,129 @@ export default {
             }
             selection.addRange(range)
         },
-        //根据className返回当前显示组件
-        inWhichComp(className, displayComp) {
-            return className.includes(displayComp.className)
+        //按键绑定
+        bindKeyEvent() {
+            const sequence = this.$refs.sequence
+            this.addLineItem(sequence)
+            this.addLine(sequence)
+            this.deleteLineItem(sequence)
+            this.deleteLine(sequence)
+        },
+        input(event) {
+            const editArea = this.domToEditArea.get(event.target)
+            //footer区域input直接结束
+            if (!editArea) return
+            //linbreak组件输入转化为sentence组件
+            const transformLinebreak = () => {
+                const info = {
+                    name: '',
+                    text: [
+                        {
+                            value: editArea.$el.innerText,
+                            uuid: uuidv1(),
+                        },
+                    ],
+                    remark: [
+                        {
+                            value: '',
+                            uuid: uuidv1(),
+                        },
+                    ],
+                    type: Type.sentence,
+                    uuid: uuidv1(),
+                }
+                const index = this.sequence.data.indexOf(editArea.origin)
+                this.sequence.data.splice(index, 1, info)
+                this.$nextTick(() => {
+                    console.log(this.domToEditArea)
+                    const sentence = this.getChildDomByInfo(info)
+                    const text = sentence.children[1]
+                    const textNode = text.firstChild.firstChild
+                    const selection = window.getSelection()
+                    const range = document.createRange()
+                    range.setStart(textNode, 1)
+                    selection.addRange(range)
+                })
+            }
+            if (!event.data && event.inputType !== 'deleteContentBackward')
+                return
+            if (editArea.origin.type === Type.linebreak) {
+                transformLinebreak()
+            } else {
+                if (editArea.index !== undefined) {
+                    editArea.origin[editArea.KEY][editArea.index].value =
+                        editArea.$el.innerText
+                } else {
+                    editArea.origin[editArea.KEY] = editArea.$el.innerText
+                }
+            }
+        },
+        addLineItem(sequence) {
+            Mousetrap(sequence).bind(Key.addLineItem, event => {
+                event.preventDefault()
+                const editArea = this.domToEditArea.get(event.target)
+                if (editArea.index !== undefined) {
+                    const arr = editArea.origin[editArea.KEY]
+                    const info = {
+                        value: '',
+                        uuid: uuidv1(),
+                    }
+                    arr.splice(editArea.index + 1, 0, info)
+                    this.$nextTick(() => {
+                        const newLine =
+                            editArea.$el.parentNode.children[editArea.index + 1]
+                        this.focusLine(newLine)
+                    })
+                }
+            })
         },
         addLine(sequence) {
             Mousetrap(sequence).bind(Key.addLine, event => {
                 event.preventDefault()
                 //当前事件节点
                 const node = event.target
-                //当前显示组件（sentence、linebreak、branch）
-                const displayComp = this.getDisplayComp(node)
                 const info = {
                     type: Type.linebreak,
                     uuid: uuidv1(),
                 }
-                const index = [...this.$refs.main.children].indexOf(displayComp)
+                //组件实例
+                const child = this.domToChild.get(node)
+                //组件dom
+                const childDom = child.$el
+                let index
+                if (child) {
+                    index = this.sequence.data.indexOf(child.info)
+                }
                 switch (true) {
-                    //若在header区域enter，新建一行在最开头
-                    case displayComp === this.$el:
-                        this.sequence.data.unshift(info)
-                        this.$nextTick(() => {
-                            const newLine = this.getMainChild(0)
-                            this.focusLine(newLine)
-                        })
-                        break
                     //若在sentence，linebreak组件中enter，新建一行在下一行
-                    case this.inWhichComp(Type.sentence, displayComp):
-                    case this.inWhichComp(Type.linebreak, displayComp):
+                    case this.inWhichComp(childDom, Type.sentence):
+                    case this.inWhichComp(childDom, Type.linebreak):
                         this.sequence.data.splice(index + 1, 0, info)
                         this.$nextTick(() => {
-                            const newLine = this.getMainChild(index + 1)
+                            const newLine = childDom.nextSibling
                             this.focusLine(newLine)
                         })
                         break
                     //若在branch组件中enter，新建choice在最末尾
-                    case this.inWhichComp(Type.branch, displayComp):
+                    case this.inWhichComp(childDom, Type.branch):
                         const choice = {
                             value: '',
                             uuid: uuidv1(),
                         }
                         this.sequence.data[index].choices.push(choice)
                         this.$nextTick(() => {
-                            const branch = this.getMainChild(index)
+                            const branch = childDom
                             const choices = branch.children[1]
                             const newLine =
                                 choices.children[choices.children.length - 1]
+                            this.focusLine(newLine)
+                        })
+                        break
+                    //若在header区域enter，新建一行在最开头
+                    default:
+                        this.sequence.data.unshift(info)
+                        this.$nextTick(() => {
+                            const newLine = this.$refs.main.firstChild
                             this.focusLine(newLine)
                         })
                         break
@@ -168,15 +254,51 @@ export default {
             }
             return focusLineIndex
         },
+        deleteLineItem(sequence) {
+            Mousetrap(sequence).bind(Key.deleteLineItem, event => {
+                const editArea = this.domToEditArea.get(event.target)
+                let text
+                try {
+                    text = editArea.origin[editArea.KEY][editArea.index].value
+                } catch {
+                    return
+                }
+                if (editArea.index !== undefined && text === '') {
+                    const arr = editArea.origin[editArea.KEY]
+                    const info = {
+                        value: '',
+                        uuid: uuidv1(),
+                    }
+                    const parentNode = editArea.$el.parentNode
+                    const focusLineIndex = this.deletionRule(
+                        info,
+                        arr,
+                        editArea.index
+                    )
+                    this.$nextTick(() => {
+                        const newLine = parentNode.children[focusLineIndex]
+                        setTimeout(() => {
+                            this.focusLine(newLine)
+                        }, 100)
+                    })
+                }
+            })
+        },
         deleteLine(sequence) {
             Mousetrap(sequence).bind(Key.deleteLine, event => {
                 event.preventDefault()
                 const node = event.target
-                const displayComp = this.getDisplayComp(node)
-                const index = [...this.$refs.main.children].indexOf(displayComp)
+                //组件实例
+                const child = this.domToChild.get(node)
+                //组件dom
+                const childDom = child.$el
+                let index
+                if (child) {
+                    index = this.sequence.data.indexOf(child.info)
+                }
                 switch (true) {
-                    case this.inWhichComp(Type.sentence, displayComp):
-                    case this.inWhichComp(Type.linebreak, displayComp):
+                    case this.inWhichComp(childDom, Type.sentence):
+                    case this.inWhichComp(childDom, Type.linebreak):
                         const info = {
                             type: Type.linebreak,
                             uuid: uuidv1(),
@@ -187,13 +309,14 @@ export default {
                             index
                         )
                         this.$nextTick(() => {
-                            const nextLine = this.getMainChild(focusLineIndex)
+                            const info = this.sequence.data[focusLineIndex]
+                            const nextLine = this.getChildDomByInfo(info)
                             this.focusLine(nextLine)
                         })
                         break
-                    case this.inWhichComp(Type.branch, displayComp):
+                    case this.inWhichComp(childDom, Type.branch):
                         this.$nextTick(() => {
-                            const branch = this.getMainChild(index)
+                            const branch = childDom
                             const choices = branch.children[1]
                             //无法在question区域中删除
                             if (![...choices.children].includes(node)) return

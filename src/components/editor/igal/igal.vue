@@ -122,16 +122,17 @@ export default {
         },
         //按键绑定
         bindKeyEvent() {
-            Mousetrap(this.$refs['igal']).bind(Type.insertSequence, event => {
-                event.preventDefault()
-                this.insertSequence()
-            })
+            const igal = this.$refs.igal
+            this.insertSequence(igal)
         },
         //shift+insert插入新的序列
-        async insertSequence() {
-            const sequence = await createSequence(this.configPath)
-            this.list.push(sequence)
-            this.updateData()
+        insertSequence(igal) {
+            Mousetrap(igal).bind(Type.insertSequence, async event => {
+                event.preventDefault()
+                const newSequence = await createSequence(this.configPath)
+                this.list.push(newSequence)
+                this.updateData()
+            })
         },
     },
 }
