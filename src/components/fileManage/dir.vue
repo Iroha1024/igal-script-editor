@@ -111,9 +111,9 @@ export default {
             await this.operate(file, true, async () => {
                 const exname = Path.extname(file.path)
                 if (exname === '.igal') {
-                    await createIgal(this.configPath, file.path)
+                    const uuids = await createIgal(this.configPath, file.path)
                     file.isNewBuilt = false
-                    this.$store.dispatch('updateUuids')
+                    this.$store.dispatch('updateUuids', { file, uuids })
                     this.$router.push({
                         path: `/file/${file.path}`,
                     })

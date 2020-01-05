@@ -34,6 +34,7 @@ import saveIgal from '@/utils/igal/saveIgal'
 import Type from '@/utils/shortcutKey'
 import createSequence from '@/utils/sequence/createSequence'
 import Mousetrap from '@/utils/Mousetrap'
+import { findFileByPath } from '@/utils/fileManage/findOrigin'
 
 export default {
     data() {
@@ -55,6 +56,7 @@ export default {
         ...mapState({
             configPath: state => state.project.configPath,
             initIgalData: state => state.project.initIgalData,
+            files: state => state.fileManage.files,
         }),
     },
     props: {
@@ -93,7 +95,7 @@ export default {
             this.updateData()
             console.log(this.list)
             await saveIgal(this.list, this.path)
-            this.$store.dispatch('updateUuids')
+            this.updateUuids()
         },
         //更新状态
         updateData() {
@@ -111,6 +113,11 @@ export default {
             this.list.forEach(sequence => {
                 this.$delete(sequence, 'rank')
             })
+        },
+        updateUuids() {
+            const file = findFileByPath(this.files, this.path)
+            const uuids = this.list.map(sequence => sequence.uuid)
+            this.$store.dispatch('updateUuids', { file, uuids })
         },
         computedTitle(sequence) {
             const title = sequence.customized.title

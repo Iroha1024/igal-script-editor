@@ -10,4 +10,5 @@ export default async function createIgal(setting, path) {
     const sequence = await createSequence(setting)
     const igal = [sequence]
     await saveIgal(igal, path)
+    return [sequence.uuid]
 }

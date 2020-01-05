@@ -85,29 +85,25 @@ export async function readDir(path) {
 /**
  * 读取项目下所有序列，并生成path-->igal的Map
  * @param {Array} files 项目下所有文件及文件夹
+ * @param {Map} fileToUuids file-->uuids
  * @param {string} setting setting.json路径
  */
-export async function readAllSequences(files, setting) {
+export async function readAllSequences(files, fileToUuids, setting) {
     const initIgalData = new Map()
-    //存放igal的数组 e.g. [igal, igal, [sequence, sequence]]
-    const wrappedList = []
     async function readAllIgal(files, setting) {
         for (const file of files) {
             if (Array.isArray(file)) {
                 await readAllIgal(file, setting)
             } else if (Path.extname(file.path) === '.igal') {
                 const igal = await readIgal(file.path, setting)
+                const uuids = igal.map(sequence => sequence.uuid)
                 initIgalData.set(file.path, igal)
-                wrappedList.push(igal)
+                fileToUuids.set(file, uuids)
             }
         }
     }
     await readAllIgal(files, setting)
-    const sequenceList = wrappedList.flat()
-    return {
-        initIgalData,
-        sequenceList,
-    }
+    return initIgalData
 }
 
 function setUuid(arr) {

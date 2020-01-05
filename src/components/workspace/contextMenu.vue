@@ -170,6 +170,7 @@ export default {
             this.$refs.delteFile.addEventListener('click', () => {
                 const file = findFileByPath(this.files, this.path)
                 const arr = findArrOfDir(this.files, this.path)
+                this.$store.dispatch('updateUuids', { file })
                 arr.splice(arr.indexOf(file), 1)
                 shell.moveItemToTrash(this.path)
             })
