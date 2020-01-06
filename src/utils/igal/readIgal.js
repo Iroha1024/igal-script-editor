@@ -128,6 +128,7 @@ function extractContent(file, json, igal) {
     content.forEach(line => {
         const each_line = {}
         each_line.uuid = uuidv1()
+        each_line.size = 0
         let part = []
         switch (line[0]) {
             case Mark.start:
@@ -166,6 +167,10 @@ function extractContent(file, json, igal) {
                 each_line.remark = splitBy(remark, '|')
                 each_line.remark = setUuid(each_line.remark)
                 each_line.type = Type.sentence
+                each_line.MAX_LINE = Math.max(
+                    each_line.text.length,
+                    each_line.remark.length
+                )
                 data.push(each_line)
                 break
             case Mark.branch:
@@ -174,6 +179,7 @@ function extractContent(file, json, igal) {
                 each_line.question = question.slice(1)
                 each_line.choices = setUuid(choices)
                 each_line.type = Type.branch
+                each_line.MAX_LINE = each_line.choices.length + 3
                 data.push(each_line)
                 break
             case Mark.end:
@@ -191,6 +197,7 @@ function extractContent(file, json, igal) {
             default:
                 if (flag) {
                     each_line.type = Type.linebreak
+                    each_line.MAX_LINE = 1
                     data.push(each_line)
                 }
                 break

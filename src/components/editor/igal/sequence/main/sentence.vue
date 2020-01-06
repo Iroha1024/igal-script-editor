@@ -2,7 +2,7 @@
     <div class="sentence">
         <data-layout
             v-for="([key, value], index) of Object.entries(info)"
-            v-if="!['uuid', 'type'].includes(key)"
+            v-if="['name', 'text', 'remark'].includes(key)"
             :key="index"
             :class="key"
             :data="value"
@@ -15,9 +15,27 @@
 <script>
 import dataLayout from '../dataLayout/dataLayout'
 
+import { calcSize } from '@/utils/sequence/createSequence'
+
 export default {
     props: {
         info: Object,
+    },
+    watch: {
+        info: {
+            handler(newVal) {
+                const MAX_LINE = Math.max(
+                    newVal.text.length,
+                    newVal.remark.length
+                )
+                if (newVal.MAX_LINE !== MAX_LINE) {
+                    const size = calcSize()
+                    this.info.MAX_LINE = MAX_LINE
+                    this.info.size = this.info.MAX_LINE * size
+                }
+            },
+            deep: true,
+        },
     },
     components: {
         dataLayout,

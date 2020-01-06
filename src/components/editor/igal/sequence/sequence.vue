@@ -6,13 +6,21 @@
             ></customized-info>
         </header>
         <main ref="main">
-            <component
-                :is="item.type"
-                v-for="(item, index) of sequence.data"
-                :key="item.uuid"
-                :info="item"
-                ref="child"
-            ></component>
+            <RecycleScroller
+                class="scroller"
+                :items="sequence.data"
+                key-field="uuid"
+                page-mode
+            >
+                <template v-slot="{ item }">
+                    <component
+                        :is="item.type"
+                        :key="item.uuid"
+                        :info="item"
+                        :ref="`child-${item.uuid}`"
+                    ></component>
+                </template>
+            </RecycleScroller>
         </main>
         <footer>
             <button-area :sequence="sequence"></button-area>
@@ -32,12 +40,18 @@ import buttonArea from './footer/buttonArea'
 import { Type } from '@/utils/sequence/mark'
 import Key from '@/utils/shortcutKey'
 import Mousetrap from '@/utils/Mousetrap'
+import {
+    createLinebreak,
+    createSentence,
+    calcSize
+} from '@/utils/sequence/createSequence'
 
 export default {
     data() {
         return {
             domToEditArea: new WeakMap(),
             domToChild: new WeakMap(),
+            timerId: null,
         }
     },
     props: {
@@ -60,7 +74,27 @@ export default {
     mounted() {
         this.bindKeyEvent()
     },
+    activated() {
+        this.deleteRef()
+    },
+    deactivated() {
+        clearTimeout(this.timerId)
+    },
     methods: {
+        //删除多余的child ref
+        deleteRef() {
+            const min = 10
+            const time = min * 60 * 1000
+            this.timerId = setTimeout(() => {
+                Object.entries(this.$refs).forEach(([key, value]) => {
+                    if (!value) {
+                        this.$delete(this.$refs, key)
+                    }
+                })
+                console.log(this.sequence.uuid, this.$refs)
+                this.deleteRef()
+            }, time)
+        },
         //editArea dom-->editArea instance
         setDomToEditArea(dom, sequence) {
             this.domToEditArea.set(dom, sequence)
@@ -74,13 +108,15 @@ export default {
             this.domToChild.delete(dom)
         },
         getChildDomByInfo(info) {
-            return this.$refs.child.filter(item => item.info === info).pop().$el
+            return Object.values(this.$refs)
+                .filter(item => item && item.info === info)
+                .pop().$el
         },
         //根据className返回当前显示组件
         inWhichComp(dom, className) {
             return dom.className.includes(className)
         },
-        //光标换行
+        //光标换行，滑轮居中
         focusLine(newLine) {
             const selection = window.getSelection()
             selection.removeAllRanges()
@@ -103,6 +139,9 @@ export default {
                 range.setStart(node, 0)
             }
             selection.addRange(range)
+            newLine.scrollIntoView({
+                block: 'center',
+            })
         },
         //按键绑定
         bindKeyEvent() {
@@ -118,31 +157,15 @@ export default {
             if (!editArea) return
             //linbreak组件输入转化为sentence组件
             const transformLinebreak = () => {
-                const info = {
-                    name: '',
-                    text: [
-                        {
-                            value: editArea.$el.innerText,
-                            uuid: uuidv1(),
-                        },
-                    ],
-                    remark: [
-                        {
-                            value: '',
-                            uuid: uuidv1(),
-                        },
-                    ],
-                    type: Type.sentence,
-                    uuid: uuidv1(),
-                }
+                const info = createSentence(editArea.$el.innerText)
                 const index = this.sequence.data.indexOf(editArea.origin)
                 this.sequence.data.splice(index, 1, info)
                 this.$nextTick(() => {
-                    console.log(this.domToEditArea)
                     const sentence = this.getChildDomByInfo(info)
                     const text = sentence.children[1]
                     const textNode = text.firstChild.firstChild
                     const selection = window.getSelection()
+                    selection.removeAllRanges()
                     const range = document.createRange()
                     range.setStart(textNode, 1)
                     selection.addRange(range)
@@ -167,11 +190,11 @@ export default {
                 const editArea = this.domToEditArea.get(event.target)
                 if (editArea.index !== undefined) {
                     const arr = editArea.origin[editArea.KEY]
-                    const info = {
+                    const infoItem = {
                         value: '',
                         uuid: uuidv1(),
                     }
-                    arr.splice(editArea.index + 1, 0, info)
+                    arr.splice(editArea.index + 1, 0, infoItem)
                     this.$nextTick(() => {
                         const newLine =
                             editArea.$el.parentNode.children[editArea.index + 1]
@@ -185,10 +208,7 @@ export default {
                 event.preventDefault()
                 //当前事件节点
                 const node = event.target
-                const info = {
-                    type: Type.linebreak,
-                    uuid: uuidv1(),
-                }
+                const info = createLinebreak()
                 //组件实例
                 const child = this.domToChild.get(node)
                 //组件dom
@@ -203,7 +223,7 @@ export default {
                     case this.inWhichComp(childDom, Type.linebreak):
                         this.sequence.data.splice(index + 1, 0, info)
                         this.$nextTick(() => {
-                            const newLine = childDom.nextSibling
+                            const newLine = this.getChildDomByInfo(info)
                             this.focusLine(newLine)
                         })
                         break
@@ -226,7 +246,7 @@ export default {
                     default:
                         this.sequence.data.unshift(info)
                         this.$nextTick(() => {
-                            const newLine = this.$refs.main.firstChild
+                            const newLine = this.getChildDomByInfo(info)
                             this.focusLine(newLine)
                         })
                         break
@@ -234,23 +254,24 @@ export default {
             })
         },
         /**
-         * 删除第一项元素则将其用info替换
+         * 若在删除第一项时，兄弟节点大于1时，直接删除该元素，光标不变
+         *
+         * 若只有一项时，用info替换
          *
          * 删除其余项则删除后光标跳转至上一行
-         *
-         * 若在删除第一项时，兄弟节点大于1时，直接删除该元素，光标不变
          */
         deletionRule(info, arr, index) {
             let focusLineIndex
             if (index === 0) {
-                arr.splice(0, 1, info)
+                if (arr.length > 1) {
+                    arr.splice(0, 1)
+                } else {
+                    arr.splice(0, 1, info)
+                }
                 focusLineIndex = 0
             } else {
                 arr.splice(index, 1)
                 focusLineIndex = index - 1
-            }
-            if (index === 0 && arr.length > 1) {
-                arr.splice(0, 1)
             }
             return focusLineIndex
         },
@@ -265,13 +286,13 @@ export default {
                 }
                 if (editArea.index !== undefined && text === '') {
                     const arr = editArea.origin[editArea.KEY]
-                    const info = {
+                    const infoItem = {
                         value: '',
                         uuid: uuidv1(),
                     }
                     const parentNode = editArea.$el.parentNode
                     const focusLineIndex = this.deletionRule(
-                        info,
+                        infoItem,
                         arr,
                         editArea.index
                     )
@@ -299,10 +320,7 @@ export default {
                 switch (true) {
                     case this.inWhichComp(childDom, Type.sentence):
                     case this.inWhichComp(childDom, Type.linebreak):
-                        const info = {
-                            type: Type.linebreak,
-                            uuid: uuidv1(),
-                        }
+                        const info = createLinebreak()
                         const focusLineIndex = this.deletionRule(
                             info,
                             this.sequence.data,
@@ -352,11 +370,15 @@ export default {
     border-radius: 0 0 10px 10px;
     padding: $sequence-padding;
     margin-bottom: 20px;
-    main > div {
-        &:nth-child(1) {
+    .scroller {
+        height: 100%;
+        /deep/ .vue-recycle-scroller__item-wrapper {
             border-top: $border-size $border-style $border-color;
+            .vue-recycle-scroller__item-view > div {
+                box-sizing: border-box;
+                border-bottom: $border-size $border-style $border-color;
+            }
         }
-        border-bottom: $border-size $border-style $border-color;
     }
 }
 </style>

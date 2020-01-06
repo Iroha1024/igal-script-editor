@@ -1,6 +1,7 @@
-import { readJson } from '@/utils/igal/readIgal'
-
 import uuidv1 from 'uuid/v1'
+
+import { readJson } from '@/utils/igal/readIgal'
+import { Type } from '@/utils/sequence/mark'
 
 /**
  * 创建新序列
@@ -15,14 +16,50 @@ export default async function createSequence(setting) {
     return {
         active: false,
         customized,
-        data: [
-            {
-                type: 'linebreak',
-                uuid: uuidv1(),
-            },
-        ],
+        data: [createLinebreak()],
         prev: [],
         next: [],
         uuid: uuidv1(),
+    }
+}
+
+export function calcSize() {
+    const fontSize = document.documentElement.style.getPropertyValue(
+        '--font-size'
+    )
+    const lineHeight = document.documentElement.style.getPropertyValue(
+        '--line-height'
+    )
+    return parseInt(fontSize) * lineHeight
+}
+
+export function createLinebreak() {
+    return {
+        type: Type.linebreak,
+        uuid: uuidv1(),
+        MAX_LINE: 1,
+        size: calcSize(),
+    }
+}
+
+export function createSentence(text) {
+    return {
+        name: '',
+        text: [
+            {
+                value: text,
+                uuid: uuidv1(),
+            },
+        ],
+        remark: [
+            {
+                value: '',
+                uuid: uuidv1(),
+            },
+        ],
+        type: Type.sentence,
+        uuid: uuidv1(),
+        MAX_LINE: 1,
+        size: calcSize(),
     }
 }

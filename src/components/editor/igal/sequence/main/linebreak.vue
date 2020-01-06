@@ -2,7 +2,7 @@
     <div class="linebreak">
         <data-layout
             v-for="([key, value], index) of Object.entries(info)"
-            v-if="!['uuid'].includes(key)"
+            v-if="['type'].includes(key)"
             :key="index"
             :class="key"
             :data="value"

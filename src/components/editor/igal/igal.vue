@@ -32,7 +32,7 @@ import unlinkedSequence from './unlinkedSequence/'
 import readIgalSync, { extraOperate } from '@/utils/igal/readIgal'
 import saveIgal from '@/utils/igal/saveIgal'
 import Type from '@/utils/shortcutKey'
-import createSequence from '@/utils/sequence/createSequence'
+import createSequence, { calcSize } from '@/utils/sequence/createSequence'
 import Mousetrap from '@/utils/Mousetrap'
 import { findFileByPath } from '@/utils/fileManage/findOrigin'
 
@@ -50,6 +50,9 @@ export default {
                 links: [],
             },
             showEcharts: false,
+            fontSize: document.documentElement.style.getPropertyValue(
+                '--font-size'
+            ),
         }
     },
     computed: {
@@ -57,6 +60,7 @@ export default {
             configPath: state => state.project.configPath,
             initIgalData: state => state.project.initIgalData,
             files: state => state.fileManage.files,
+            configData: state => state.program.configData,
         }),
     },
     props: {
@@ -80,13 +84,34 @@ export default {
     mounted() {
         this.bindKeyEvent()
     },
+    watch: {
+        configData(newVal) {
+            const fontSize = `${newVal.fontSize.value}px`
+            //当font-size更新后，重新计算每行行高
+            if (fontSize !== this.fontSize) {
+                this.setSequenceChildSize()
+                this.fontSize = fontSize
+            }
+        },
+    },
     methods: {
+        //为每个sequence子组件设置行高
+        setSequenceChildSize() {
+            const size = calcSize()
+            this.list.forEach(sequence => {
+                sequence.data.forEach(line => {
+                    line.size = line.MAX_LINE * size
+                })
+            })
+        },
+        //读取igal文件
         getIgal() {
             this.list = this.initIgalData.get(this.path)
             if (!this.list) {
                 this.list = []
                 readIgalSync(this.path, this.list, this.configPath)
             }
+            this.setSequenceChildSize()
             this.igal.list = this.list
             extraOperate(this.list, this.linked, this.unlinked, this.echarts)
         },
@@ -150,7 +175,7 @@ export default {
     min-height: 100%;
     height: inherit;
     padding: 20px;
-    line-height: 1.4;
+    line-height: var(--line-height);
     word-break: break-all;
     box-sizing: border-box;
     .show {
