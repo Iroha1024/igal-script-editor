@@ -45,6 +45,7 @@ import Mousetrap from '@/utils/Mousetrap'
 import {
     createLinebreak,
     createSentence,
+    createBranch,
     calcSize,
 } from '@/utils/sequence/createSequence'
 
@@ -102,7 +103,7 @@ export default {
         setDomToEditArea(dom, sequence) {
             this.domToEditArea.set(dom, sequence)
         },
-        //editArea dom-->child instance
+        //editArea dom-->child instance(e.g. <customized-info> <component>)
         setDomToChild(dom, child) {
             this.domToChild.set(dom, child)
         },
@@ -112,7 +113,7 @@ export default {
         },
         getChildDomByInfo(info) {
             return Object.values(this.$refs)
-                .filter(item => item.info === info)
+                .filter(item => item && item.info === info)
                 .pop().$el
         },
         //根据className返回当前显示组件
@@ -158,26 +159,53 @@ export default {
             const editArea = this.domToEditArea.get(event.target)
             //footer区域input直接结束
             if (!editArea) return
-            //linbreak组件输入转化为sentence组件
-            const transformLinebreak = () => {
-                const info = createSentence(editArea.$el.innerText)
+            /**
+             * @param {Object} info 子组件信息
+             * @param {number} nodeIndex 自动聚焦节点在父节点的index
+             * @param {number} focusOffset 聚焦偏移量
+             */
+            const transform = (info, nodeIndex, focusOffset) => {
                 const index = this.sequence.data.indexOf(editArea.origin)
                 this.sequence.data.splice(index, 1, info)
                 this.$nextTick(() => {
-                    const sentence = this.getChildDomByInfo(info)
-                    const text = sentence.children[1]
-                    const textNode = text.firstChild.firstChild
+                    const childDom = this.getChildDomByInfo(info)
+                    const node = childDom.children[nodeIndex]
+                    let textNode
+                    if (focusOffset === 0) {
+                        textNode = node.firstChild
+                    } else {
+                        textNode = node.firstChild.firstChild
+                    }
                     const selection = window.getSelection()
                     selection.removeAllRanges()
                     const range = document.createRange()
-                    range.setStart(textNode, 1)
+                    range.setStart(textNode, focusOffset)
                     selection.addRange(range)
                 })
+            }
+            //linbreak组件输入转化为sentence组件
+            const transformLinebreak = () => {
+                const info = createSentence(editArea.$el.innerText)
+                const offset = event.data.length
+                transform(info, 1, offset)
+            }
+            //linbreak组件输入转化为branch组件
+            const transformBranch = () => {
+                const info = createBranch()
+                transform(info, 0, 0)
+            }
+            const isLastChild = () =>{
+                return this.sequence.data.indexOf(editArea.origin) === this.sequence.data.length - 1
             }
             if (!event.data && event.inputType !== 'deleteContentBackward')
                 return
             if (editArea.origin.type === Type.linebreak) {
-                transformLinebreak()
+                const keyWord = ['?', '？']
+                if (keyWord.includes(event.data) && isLastChild()) {
+                    transformBranch()
+                } else {
+                    transformLinebreak()
+                }
             } else {
                 if (editArea.index !== undefined) {
                     editArea.origin[editArea.KEY][editArea.index].value =
@@ -321,9 +349,16 @@ export default {
                     index = this.sequence.data.indexOf(child.info)
                 }
                 this.deleteRef()
+                const inQuestion = () => {
+                    const branch = childDom
+                    const question = childDom.children[0]
+                    if ([...question.children].includes(node))
+                        return true
+                }
                 switch (true) {
                     case this.inWhichComp(childDom, Type.sentence):
                     case this.inWhichComp(childDom, Type.linebreak):
+                    case this.inWhichComp(childDom, Type.branch) && inQuestion():
                         const info = createLinebreak()
                         const focusLineIndex = this.deletionRule(
                             info,
@@ -340,8 +375,6 @@ export default {
                         this.$nextTick(() => {
                             const branch = childDom
                             const choices = branch.children[1]
-                            //无法在question区域中删除
-                            if (![...choices.children].includes(node)) return
                             const choiceIndex = [...choices.children].indexOf(
                                 node
                             )

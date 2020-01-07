@@ -63,3 +63,19 @@ export function createSentence(text) {
         size: calcSize(),
     }
 }
+
+export function createBranch() {
+    return {
+        question: '',
+        choices: [
+            {
+                value: '',
+                uuid: uuidv1(),
+            },
+        ],
+        type: Type.branch,
+        uuid: uuidv1(),
+        MAX_LINE: 4,
+        size: 4 * calcSize(),
+    }
+}
