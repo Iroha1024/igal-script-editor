@@ -38,6 +38,7 @@
 <script>
 import { mapState } from 'vuex'
 import { ipcRenderer } from 'electron'
+import { cloneDeep } from 'lodash'
 
 export default {
     computed: {
@@ -60,7 +61,7 @@ export default {
         }
     },
     created() {
-        this.data = JSON.parse(JSON.stringify(this.configData))
+        this.data = cloneDeep(this.configData)
     },
     beforeRouteEnter(to, from, next) {
         next(vm => {
@@ -100,10 +101,7 @@ export default {
             }
         },
         save() {
-            this.$store.commit(
-                'setConfigData',
-                JSON.parse(JSON.stringify(this.data))
-            )
+            this.$store.commit('setConfigData', cloneDeep(this.data))
             ipcRenderer.send('set-config', this.data)
             ipcRenderer.once('save-config', () => {
                 console.log('保存成功')

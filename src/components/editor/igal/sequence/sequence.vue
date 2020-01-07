@@ -12,8 +12,9 @@
                 key-field="uuid"
                 page-mode
             >
-                <template v-slot="{ item }">
+                <template v-slot="{ item, index }">
                     <component
+                        :style="{ height: computedHeight(item, index) }"
                         :is="item.type"
                         :key="item.uuid"
                         :info="item"
@@ -30,6 +31,7 @@
 
 <script>
 import uuidv1 from 'uuid/v1'
+import { debounce } from 'lodash'
 
 import customizedInfo from './header/customizedInfo'
 import sentence from './main/sentence'
@@ -43,7 +45,7 @@ import Mousetrap from '@/utils/Mousetrap'
 import {
     createLinebreak,
     createSentence,
-    calcSize
+    calcSize,
 } from '@/utils/sequence/createSequence'
 
 export default {
@@ -51,7 +53,6 @@ export default {
         return {
             domToEditArea: new WeakMap(),
             domToChild: new WeakMap(),
-            timerId: null,
         }
     },
     props: {
@@ -74,26 +75,28 @@ export default {
     mounted() {
         this.bindKeyEvent()
     },
-    activated() {
-        this.deleteRef()
-    },
-    deactivated() {
-        clearTimeout(this.timerId)
-    },
     methods: {
+        //最后一项可能出现样式无法显示，修改height
+        computedHeight(item, index) {
+            if (
+                index === this.sequence.data.length - 1 &&
+                item.type !== Type.branch
+            ) {
+                return item.size - 1.5 + 'px'
+            }
+        },
         //删除多余的child ref
         deleteRef() {
-            const min = 10
-            const time = min * 60 * 1000
-            this.timerId = setTimeout(() => {
+            this.debounced && this.debounced.cancel()
+            this.debounced = debounce(() => {
                 Object.entries(this.$refs).forEach(([key, value]) => {
                     if (!value) {
                         this.$delete(this.$refs, key)
                     }
                 })
                 console.log(this.sequence.uuid, this.$refs)
-                this.deleteRef()
-            }, time)
+            }, 2000)
+            this.debounced()
         },
         //editArea dom-->editArea instance
         setDomToEditArea(dom, sequence) {
@@ -109,7 +112,7 @@ export default {
         },
         getChildDomByInfo(info) {
             return Object.values(this.$refs)
-                .filter(item => item && item.info === info)
+                .filter(item => item.info === info)
                 .pop().$el
         },
         //根据className返回当前显示组件
@@ -317,6 +320,7 @@ export default {
                 if (child) {
                     index = this.sequence.data.indexOf(child.info)
                 }
+                this.deleteRef()
                 switch (true) {
                     case this.inWhichComp(childDom, Type.sentence):
                     case this.inWhichComp(childDom, Type.linebreak):

@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash'
 /**
  * 切换文件夹状态
  *
@@ -12,12 +13,12 @@ export default function toggleDirShow(info, arr, isFolded = []) {
     if (isFolded.length < 1) {
         info.isFolded = !info.isFolded
     }
-    let upperIsFolded = JSON.parse(JSON.stringify(isFolded))
+    let upperIsFolded = cloneDeep(isFolded)
     let dir = arr.filter(item => item.type === 'dir').pop()
     isFolded.push(dir.isFolded)
     for (const item of arr) {
         if (Array.isArray(item)) {
-            toggleDirShow(info, item, JSON.parse(JSON.stringify(isFolded)))
+            toggleDirShow(info, item, cloneDeep(isFolded))
         } else {
             if (item.type === 'dir') {
                 item.isShow = !upperIsFolded.some(item => item)

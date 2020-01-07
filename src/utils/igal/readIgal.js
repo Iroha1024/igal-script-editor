@@ -266,7 +266,7 @@ function setProp(igal, head = {}, rank = 0, prev = []) {
             head.prev.push(uuid)
         }
     })
-    const newPrev = JSON.parse(JSON.stringify(prev))
+    const newPrev = [...prev]
     newPrev.push(head.uuid)
     if (!head.hasOwnProperty('rank') || head.rank < rank) {
         head.rank = rank++
