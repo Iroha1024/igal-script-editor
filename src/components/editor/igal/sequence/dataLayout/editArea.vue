@@ -16,7 +16,7 @@ export default {
             innerText: '',
         }
     },
-    inject: ['setDomToEditArea', 'setDomToChild', 'deleteDomRef'],
+    inject: ['setDomToEditArea', 'setDomToChild', 'deleteEditAreaRef'],
     created() {
         if (this.index !== undefined) {
             this.innerText = this.origin[this.KEY][this.index].value
@@ -32,7 +32,7 @@ export default {
         this.setDomToChild(this.$el, this.$parent.$parent)
     },
     beforeDestroy() {
-        this.deleteDomRef(this.$el)
+        this.deleteEditAreaRef(this.$el)
     },
 }
 </script>

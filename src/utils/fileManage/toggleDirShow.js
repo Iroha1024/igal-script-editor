@@ -14,7 +14,7 @@ export default function toggleDirShow(info, arr, isFolded = []) {
         info.isFolded = !info.isFolded
     }
     let upperIsFolded = cloneDeep(isFolded)
-    let dir = arr.filter(item => item.type === 'dir').pop()
+    let dir = arr.find(item => item.type === 'dir')
     isFolded.push(dir.isFolded)
     for (const item of arr) {
         if (Array.isArray(item)) {

@@ -4,7 +4,7 @@
             <div class="title">
                 {{ computedTitle(sequence) }}
             </div>
-            <sequence class="unlinked" :sequence="sequence"></sequence>
+            <sequence :sequence="sequence"></sequence>
         </div>
     </div>
 </template>

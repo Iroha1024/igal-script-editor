@@ -70,11 +70,16 @@ export default {
         return {
             setDomToEditArea: this.setDomToEditArea,
             setDomToChild: this.setDomToChild,
-            deleteDomRef: this.deleteDomRef,
+            deleteEditAreaRef: this.deleteEditAreaRef,
         }
     },
+    inject: ['setDomToSequence', 'deleteSequenceRef', 'focusLine'],
     mounted() {
+        this.setDomToSequence(this.$el, this)
         this.bindKeyEvent()
+    },
+    beforeDestroy() {
+        this.deleteSequenceRef(this.$el)
     },
     methods: {
         //最后一项可能出现样式无法显示，修改height
@@ -100,31 +105,28 @@ export default {
             this.debounced()
         },
         //editArea dom-->editArea instance
-        setDomToEditArea(dom, sequence) {
-            this.domToEditArea.set(dom, sequence)
+        setDomToEditArea(dom, editArea) {
+            this.domToEditArea.set(dom, editArea)
         },
         //editArea dom-->child instance(e.g. <customized-info> <component>)
         setDomToChild(dom, child) {
             this.domToChild.set(dom, child)
         },
-        deleteDomRef(dom) {
+        deleteEditAreaRef(dom) {
             this.domToEditArea.delete(dom)
             this.domToChild.delete(dom)
         },
         getChildDomByInfo(info) {
-            return Object.values(this.$refs)
-                .filter(item => item && item.info === info)
-                .pop().$el
+            return Object.values(this.$refs).find(
+                item => item && item.info === info
+            ).$el
         },
         //根据className返回当前显示组件
         inWhichComp(dom, className) {
             return dom.className.includes(className)
         },
         //光标换行，滑轮居中
-        focusLine(newLine) {
-            const selection = window.getSelection()
-            selection.removeAllRanges()
-            const range = document.createRange()
+        focus(dom) {
             //找到不为注释的首个子节点
             function getFirstChildNode(node) {
                 if (node.children.length < 1) {
@@ -135,15 +137,7 @@ export default {
                     }
                 }
             }
-            let node = getFirstChildNode(newLine)
-            if (node.textContent) {
-                const index = node.textContent.length
-                range.setStart(node.firstChild, index)
-            } else {
-                range.setStart(node, 0)
-            }
-            selection.addRange(range)
-            newLine.scrollIntoView({
+            this.focusLine(dom, getFirstChildNode, {
                 block: 'center',
             })
         },
@@ -194,8 +188,11 @@ export default {
                 const info = createBranch()
                 transform(info, 0, 0)
             }
-            const isLastChild = () =>{
-                return this.sequence.data.indexOf(editArea.origin) === this.sequence.data.length - 1
+            const isLastChild = () => {
+                return (
+                    this.sequence.data.indexOf(editArea.origin) ===
+                    this.sequence.data.length - 1
+                )
             }
             if (!event.data && event.inputType !== 'deleteContentBackward')
                 return
@@ -229,7 +226,7 @@ export default {
                     this.$nextTick(() => {
                         const newLine =
                             editArea.$el.parentNode.children[editArea.index + 1]
-                        this.focusLine(newLine)
+                        this.focus(newLine)
                     })
                 }
             })
@@ -255,7 +252,7 @@ export default {
                         this.sequence.data.splice(index + 1, 0, info)
                         this.$nextTick(() => {
                             const newLine = this.getChildDomByInfo(info)
-                            this.focusLine(newLine)
+                            this.focus(newLine)
                         })
                         break
                     //若在branch组件中enter，新建choice在最末尾
@@ -270,7 +267,7 @@ export default {
                             const choices = branch.children[1]
                             const newLine =
                                 choices.children[choices.children.length - 1]
-                            this.focusLine(newLine)
+                            this.focus(newLine)
                         })
                         break
                     //若在header区域enter，新建一行在最开头
@@ -278,7 +275,7 @@ export default {
                         this.sequence.data.unshift(info)
                         this.$nextTick(() => {
                             const newLine = this.getChildDomByInfo(info)
-                            this.focusLine(newLine)
+                            this.focus(newLine)
                         })
                         break
                 }
@@ -330,7 +327,7 @@ export default {
                     this.$nextTick(() => {
                         const newLine = parentNode.children[focusLineIndex]
                         setTimeout(() => {
-                            this.focusLine(newLine)
+                            this.focus(newLine)
                         }, 100)
                     })
                 }
@@ -352,13 +349,13 @@ export default {
                 const inQuestion = () => {
                     const branch = childDom
                     const question = childDom.children[0]
-                    if ([...question.children].includes(node))
-                        return true
+                    if ([...question.children].includes(node)) return true
                 }
                 switch (true) {
                     case this.inWhichComp(childDom, Type.sentence):
                     case this.inWhichComp(childDom, Type.linebreak):
-                    case this.inWhichComp(childDom, Type.branch) && inQuestion():
+                    case this.inWhichComp(childDom, Type.branch) &&
+                        inQuestion():
                         const info = createLinebreak()
                         const focusLineIndex = this.deletionRule(
                             info,
@@ -368,7 +365,7 @@ export default {
                         this.$nextTick(() => {
                             const info = this.sequence.data[focusLineIndex]
                             const nextLine = this.getChildDomByInfo(info)
-                            this.focusLine(nextLine)
+                            this.focus(nextLine)
                         })
                         break
                     case this.inWhichComp(childDom, Type.branch):
@@ -390,7 +387,7 @@ export default {
                             this.$nextTick(() => {
                                 const nextLine =
                                     choices.children[focusLineIndex]
-                                this.focusLine(nextLine)
+                                this.focus(nextLine)
                             })
                         })
                         break

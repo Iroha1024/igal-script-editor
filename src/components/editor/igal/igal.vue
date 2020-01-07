@@ -53,6 +53,7 @@ export default {
             fontSize: document.documentElement.style.getPropertyValue(
                 '--font-size'
             ),
+            domToSequence: new Map(),
         }
     },
     computed: {
@@ -76,6 +77,9 @@ export default {
         return {
             save: this.save,
             igal: this.igal,
+            setDomToSequence: this.setDomToSequence,
+            deleteSequenceRef: this.deleteSequenceRef,
+            focusLine: this.focusLine,
         }
     },
     created() {
@@ -95,6 +99,12 @@ export default {
         },
     },
     methods: {
+        setDomToSequence(dom, sequence) {
+            this.domToSequence.set(dom, sequence)
+        },
+        deleteSequenceRef(dom) {
+            this.domToSequence.delete(dom)
+        },
         //为每个sequence子组件设置行高
         setSequenceChildSize() {
             const size = calcSize()
@@ -156,15 +166,104 @@ export default {
         bindKeyEvent() {
             const igal = this.$refs.igal
             this.insertSequence(igal)
+            this.deleteSequence(igal)
+        },
+        getDomBySequence(sequence) {
+            for (const [dom, instance] of [...this.domToSequence]) {
+                if (instance.sequence === sequence) {
+                    return dom
+                }
+            }
+        },
+        getDomByRank(sequence) {
+            if (!sequence.hasOwnProperty('rank')) return
+            for (const [dom, inst] of [...this.domToSequence]) {
+                if (inst.sequence.rank === sequence.rank) {
+                    return dom
+                }
+            }
         },
         //shift+insert插入新的序列
         insertSequence(igal) {
             Mousetrap(igal).bind(Type.insertSequence, async event => {
                 event.preventDefault()
-                const newSequence = await createSequence(this.configPath)
-                this.list.push(newSequence)
+                const sequence = await createSequence(this.configPath)
+                this.list.push(sequence)
                 this.updateData()
+                this.$nextTick(() => {
+                    const dom = this.getDomBySequence(sequence)
+                    this.focus(dom)
+                })
             })
+        },
+        deleteSequence(igal) {
+            Mousetrap(igal).bind(Type.deleteSequence, event => {
+                event.preventDefault()
+                //单序列，无法删除
+                if (this.list.length === 1) return
+                const dom = event.path.find(dom => dom.className === 'sequence')
+                const instance = this.domToSequence.get(dom)
+                const { sequence } = instance
+                const index = this.list.indexOf(sequence)
+                this.list.splice(index, 1)
+                this.updateData()
+                this.$nextTick(() => {
+                    //找同级rank的dom
+                    let sequenceDom = this.getDomByRank(sequence)
+                    if (!sequenceDom) {
+                        //若无，找上一个sequence的同级rank，有则选active激活dom，无则取focusSequence
+                        let focusSequence = this.list[index - 1]
+                        const sameRankList = this.list.filter(
+                            sequence =>
+                                focusSequence.hasOwnProperty('rank') &&
+                                sequence.rank === focusSequence.rank
+                        )
+                        if (sameRankList.length > 1) {
+                            focusSequence = sameRankList.find(
+                                sequence => sequence.active
+                            )
+                        }
+                        sequenceDom = this.getDomBySequence(focusSequence)
+                    }
+                    // console.log(sequence.uuid)
+                    this.focus(sequenceDom)
+                })
+            })
+        },
+        focus(dom) {
+            function getFocusNode(node) {
+                if (node.contentEditable === 'true') {
+                    return node
+                } else {
+                    for (const item of node.children) {
+                        const focusNode = getFocusNode(item)
+                        if (focusNode) return focusNode
+                    }
+                }
+            }
+            this.focusLine(dom, getFocusNode, {
+                block: 'center',
+                behavior: 'smooth',
+            })
+        },
+        /**
+         * @param {HTMLElement} dom 需聚焦的dom
+         * @param {Function} getFocusNode 在dom内寻找最终聚焦节点的方法
+         * @param {Object | Boolean} scrollOption 滑动配置
+         */
+        focusLine(dom, getFocusNode, scrollOption) {
+            const selection = window.getSelection()
+            selection.removeAllRanges()
+            const range = document.createRange()
+            let node = getFocusNode(dom)
+            if (node.textContent) {
+                const index = node.textContent.length
+                range.setStart(node.firstChild, index)
+            } else {
+                range.setStart(node, 0)
+            }
+            selection.addRange(range)
+            node.scrollIntoView(scrollOption)
         },
     },
 }

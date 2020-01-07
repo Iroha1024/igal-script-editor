@@ -4,11 +4,10 @@
  * @param {string} path 当前路径
  */
 export function findArrOfDir(files, path) {
-    let list
     for (const item of files) {
         if (item.path === path) return files
         if (Array.isArray(item)) {
-            list = findArrOfDir(item, path)
+            const list = findArrOfDir(item, path)
             if (list) return list
         }
     }
@@ -20,11 +19,10 @@ export function findArrOfDir(files, path) {
  * @param {string} path 当前路径
  */
 export function findFileByPath(files, path) {
-    let file
     for (const item of files) {
         if (item.path === path) return item
         if (Array.isArray(item)) {
-            file = findFileByPath(item, path)
+            const file = findFileByPath(item, path)
             if (file) return file
         }
     }
@@ -36,12 +34,11 @@ export function findFileByPath(files, path) {
  * @param {Array} outerArr 外层数组
  */
 export function findArrOfArr(arr, outerArr) {
-    let list
     if (outerArr.includes(arr)) return outerArr
     for (const item of outerArr) {
         if (Array.isArray(item)) {
-            list = findArrOfArr(arr, item)
+            const list = findArrOfArr(arr, item)
+            if (list) return list
         }
-        if (list) return list
     }
 }
