@@ -92,18 +92,14 @@ export default {
             }
         },
         //删除多余的child ref
-        deleteRef() {
-            this.debounced && this.debounced.cancel()
-            this.debounced = debounce(() => {
-                Object.entries(this.$refs).forEach(([key, value]) => {
-                    if (!value) {
-                        this.$delete(this.$refs, key)
-                    }
-                })
-                console.log(this.sequence.uuid, this.$refs)
-            }, 2000)
-            this.debounced()
-        },
+        deleteRef: debounce(function () {
+            Object.entries(this.$refs).forEach(([key, value]) => {
+                if (!value) {
+                    this.$delete(this.$refs, key)
+                }
+            })
+            console.log(this.sequence.uuid, this.$refs)
+        }, 2000),
         //editArea dom-->editArea instance
         setDomToEditArea(dom, editArea) {
             this.domToEditArea.set(dom, editArea)

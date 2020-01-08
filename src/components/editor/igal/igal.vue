@@ -23,6 +23,7 @@
 import fs from 'fs'
 
 import { mapState } from 'vuex'
+import { debounce } from 'lodash'
 
 import compositionMap from './echarts/compositionMap'
 import echartButton from '@/components/button/echart-button'
@@ -183,19 +184,33 @@ export default {
                 }
             }
         },
-        //shift+insert插入新的序列
+        //shift+insert插入新的序列（1s防抖），连通新序列
         insertSequence(igal) {
-            Mousetrap(igal).bind(Type.insertSequence, async event => {
+            const insert = debounce(
+                async () => {
+                    const dom = event.path.find(dom => dom.className === 'sequence')
+                    const instance = this.domToSequence.get(dom)
+                    const sequence = await createSequence(this.configPath)
+                    this.list.push(sequence)
+                    instance.sequence.next.push(sequence.uuid)
+                    this.updateData()
+                    this.$nextTick(() => {
+                        const dom = this.getDomBySequence(sequence)
+                        this.focus(dom)
+                    })
+                },
+                1000,
+                {
+                    leading: true,
+                    trailing: false,
+                }
+            )
+            Mousetrap(igal).bind(Type.insertSequence, event => {
                 event.preventDefault()
-                const sequence = await createSequence(this.configPath)
-                this.list.push(sequence)
-                this.updateData()
-                this.$nextTick(() => {
-                    const dom = this.getDomBySequence(sequence)
-                    this.focus(dom)
-                })
+                insert()
             })
         },
+        //ctrl+shift+d删除序列
         deleteSequence(igal) {
             Mousetrap(igal).bind(Type.deleteSequence, event => {
                 event.preventDefault()
@@ -278,7 +293,7 @@ export default {
     word-break: break-all;
     box-sizing: border-box;
     .show {
-        z-index: 101;
+        z-index: 103;
         position: fixed;
         right: 40px;
         top: 50px;
